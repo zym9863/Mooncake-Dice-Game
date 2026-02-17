@@ -97,19 +97,22 @@ export function useGameState() {
       return { awarded: false, prizeName: '', stolen: false }
     }
 
-    const info = getRankInfo(result.rank)
+    const rank = result.rank
+    const info = getRankInfo(rank)
+    const player = state.players[state.currentPlayerIndex]
+    if (!player) return { awarded: false, prizeName: '', stolen: false }
 
     // 状元类
     if (result.championLevel > 0) {
-      return handleChampion(result, info.prize)
+      return handleChampion(result, rank, player)
     }
 
     // 非状元奖品
     const prizeName = info.prize
-    if (state.prizePool[prizeName] > 0) {
-      state.prizePool[prizeName]--
-      state.players[state.currentPlayerIndex].prizes.push({
-        rank: result.rank,
+    if ((state.prizePool[prizeName] ?? 0) > 0) {
+      state.prizePool[prizeName] = (state.prizePool[prizeName] ?? 0) - 1
+      player.prizes.push({
+        rank,
         rankName: info.name,
         rankTitle: info.title,
         round: state.currentRound,
@@ -123,16 +126,17 @@ export function useGameState() {
 
   function handleChampion(
     result: DiceResult,
-    _prizeName: string
+    rank: RankType,
+    currentPlayer: Player
   ): { awarded: boolean; prizeName: string; stolen: boolean } {
-    const info = getRankInfo(result.rank!)
+    const info = getRankInfo(rank)
 
     if (!state.champion) {
       // 首次获得状元
-      if (state.prizePool['状元'] > 0) {
-        state.prizePool['状元']--
-        state.players[state.currentPlayerIndex].prizes.push({
-          rank: result.rank!,
+      if ((state.prizePool['状元'] ?? 0) > 0) {
+        state.prizePool['状元'] = (state.prizePool['状元'] ?? 0) - 1
+        currentPlayer.prizes.push({
+          rank,
           rankName: info.name,
           rankTitle: '状元',
           round: state.currentRound,
@@ -153,14 +157,16 @@ export function useGameState() {
     if (result.championLevel > state.champion.championLevel) {
       // 从前任状元手中移除
       const prevPlayer = state.players[state.champion.playerIndex]
-      const champIdx = prevPlayer.prizes.findIndex(p => p.rankTitle === '状元')
-      if (champIdx !== -1) {
-        prevPlayer.prizes.splice(champIdx, 1)
+      if (prevPlayer) {
+        const champIdx = prevPlayer.prizes.findIndex(p => p.rankTitle === '状元')
+        if (champIdx !== -1) {
+          prevPlayer.prizes.splice(champIdx, 1)
+        }
       }
 
       // 给新状元
-      state.players[state.currentPlayerIndex].prizes.push({
-        rank: result.rank!,
+      currentPlayer.prizes.push({
+        rank,
         rankName: info.name,
         rankTitle: '状元',
         round: state.currentRound,

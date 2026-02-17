@@ -1,30 +1,67 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+import { computed } from 'vue'
+import SetupScreen from './components/SetupScreen.vue'
+import GameScreen from './components/GameScreen.vue'
+import ResultScreen from './components/ResultScreen.vue'
+import { useGameState } from './composables/useGameState'
+import type { DiceResult } from './composables/useDiceRoll'
+
+const {
+  state,
+  startGame,
+  awardPrize,
+  nextTurn,
+  resetGame,
+  getPlayerRanking,
+} = useGameState()
+
+const ranking = computed(() => getPlayerRanking())
+
+function handleStart(playerNames: string[], totalRounds: number) {
+  startGame(playerNames, totalRounds)
+}
+
+function handleRolled(result: DiceResult) {
+  awardPrize(result)
+}
+
+function handleNext() {
+  nextTurn()
+}
+
+function handleEnd() {
+  state.phase = 'result'
+}
+
+function handleRestart() {
+  resetGame()
+}
 </script>
 
 <template>
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
-  </div>
-  <HelloWorld msg="Vite + Vue" />
-</template>
+  <SetupScreen
+    v-if="state.phase === 'setup'"
+    @start="handleStart"
+  />
 
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-</style>
+  <GameScreen
+    v-else-if="state.phase === 'playing'"
+    :players="state.players"
+    :currentPlayerIndex="state.currentPlayerIndex"
+    :currentRound="state.currentRound"
+    :totalRounds="state.totalRounds"
+    :prizePool="state.prizePool"
+    :champion="state.champion"
+    @rolled="handleRolled"
+    @next="handleNext"
+    @end="handleEnd"
+  />
+
+  <ResultScreen
+    v-else-if="state.phase === 'result'"
+    :players="state.players"
+    :champion="state.champion"
+    :ranking="ranking"
+    @restart="handleRestart"
+  />
+</template>
