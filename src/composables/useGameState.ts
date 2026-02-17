@@ -72,8 +72,12 @@ export function useGameState() {
   const isGameOver = computed(() => {
     if (state.phase !== 'playing') return false
 
+    if (totalPrizesRemaining.value <= 0) {
+      return true
+    }
+
     if (state.endMode === 'all_prizes_distributed') {
-      return totalPrizesRemaining.value <= 0
+      return false
     }
 
     return state.currentRound > state.totalRounds

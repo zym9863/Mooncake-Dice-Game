@@ -48,8 +48,10 @@ const prizeEntries = computed(() =>
   })),
 )
 
+const showRoundCard = computed(() => props.endMode !== 'all_prizes_distributed')
+
 const shouldShowResultButton = computed(() => {
-  if (props.endMode === 'all_prizes_distributed') {
+  if (totalPrizes.value <= 0) {
     return totalPrizes.value <= 0
   }
 
@@ -144,8 +146,8 @@ function handleNext() {
       />
     </div>
 
-    <section class="status-grid">
-      <article class="panel status-card">
+    <section class="status-grid" :class="{ compact: !showRoundCard }">
+      <article v-if="showRoundCard" class="panel status-card">
         <span class="label">轮次</span>
         <strong>{{ currentRound }} / {{ totalRounds }}</strong>
       </article>
@@ -280,6 +282,10 @@ function handleNext() {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.8rem;
+}
+
+.status-grid.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .status-card {
