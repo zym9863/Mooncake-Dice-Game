@@ -5,6 +5,7 @@ import GameScreen from './components/GameScreen.vue'
 import ResultScreen from './components/ResultScreen.vue'
 import { useGameState } from './composables/useGameState'
 import type { DiceResult } from './composables/useDiceRoll'
+import type { GameEndMode } from './composables/useGameState'
 
 const {
   state,
@@ -17,8 +18,8 @@ const {
 
 const ranking = computed(() => getPlayerRanking())
 
-function handleStart(playerNames: string[], totalRounds: number) {
-  startGame(playerNames, totalRounds)
+function handleStart(playerNames: string[], totalRounds: number, endMode: GameEndMode) {
+  startGame(playerNames, totalRounds, endMode)
 }
 
 function handleRolled(result: DiceResult) {
@@ -27,10 +28,6 @@ function handleRolled(result: DiceResult) {
 
 function handleNext() {
   nextTurn()
-}
-
-function handleEnd() {
-  state.phase = 'result'
 }
 
 function handleRestart() {
@@ -50,11 +47,11 @@ function handleRestart() {
     :currentPlayerIndex="state.currentPlayerIndex"
     :currentRound="state.currentRound"
     :totalRounds="state.totalRounds"
+    :endMode="state.endMode"
     :prizePool="state.prizePool"
     :champion="state.champion"
     @rolled="handleRolled"
     @next="handleNext"
-    @end="handleEnd"
   />
 
   <ResultScreen

@@ -2,6 +2,7 @@ import { reactive, computed } from 'vue'
 import { type DiceResult, type RankType, getRankInfo } from './useDiceRoll'
 
 export type GamePhase = 'setup' | 'playing' | 'result'
+export type GameEndMode = 'all_rounds_completed' | 'all_prizes_distributed'
 
 export interface Prize {
   rank: RankType
@@ -28,6 +29,7 @@ interface GameState {
   currentPlayerIndex: number
   currentRound: number
   totalRounds: number
+  endMode: GameEndMode
   prizePool: Record<string, number>
   champion: Champion | null
   lastResult: DiceResult | null
@@ -53,6 +55,7 @@ export function useGameState() {
     currentPlayerIndex: 0,
     currentRound: 1,
     totalRounds: 10,
+    endMode: 'all_rounds_completed',
     prizePool: { ...DEFAULT_PRIZE_POOL },
     champion: null,
     lastResult: null,
@@ -68,18 +71,20 @@ export function useGameState() {
 
   const isGameOver = computed(() => {
     if (state.phase !== 'playing') return false
-    // 所有奖品发完
-    if (totalPrizesRemaining.value <= 0) return true
-    // 最后一轮最后一位玩家
-    if (state.currentRound > state.totalRounds) return true
-    return false
+
+    if (state.endMode === 'all_prizes_distributed') {
+      return totalPrizesRemaining.value <= 0
+    }
+
+    return state.currentRound > state.totalRounds
   })
 
-  function startGame(playerNames: string[], totalRounds: number) {
+  function startGame(playerNames: string[], totalRounds: number, endMode: GameEndMode) {
     state.players = playerNames.map(name => ({ name, prizes: [] }))
     state.currentPlayerIndex = 0
     state.currentRound = 1
     state.totalRounds = totalRounds
+    state.endMode = endMode
     state.prizePool = { ...DEFAULT_PRIZE_POOL }
     state.champion = null
     state.lastResult = null
@@ -191,6 +196,11 @@ export function useGameState() {
     state.lastPrizeAwarded = null
     state.championStolen = false
 
+    if (isGameOver.value) {
+      state.phase = 'result'
+      return
+    }
+
     state.currentPlayerIndex++
     if (state.currentPlayerIndex >= state.players.length) {
       state.currentPlayerIndex = 0
@@ -207,6 +217,7 @@ export function useGameState() {
     state.players = []
     state.currentPlayerIndex = 0
     state.currentRound = 1
+    state.endMode = 'all_rounds_completed'
     state.prizePool = { ...DEFAULT_PRIZE_POOL }
     state.champion = null
     state.lastResult = null

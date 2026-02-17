@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import type { GameEndMode } from '../composables/useGameState'
 
 const emit = defineEmits<{
-  start: [playerNames: string[], totalRounds: number]
+  start: [playerNames: string[], totalRounds: number, endMode: GameEndMode]
 }>()
 
-const playerCount = ref(4)
-const playerNames = ref<string[]>(['', '', '', ''])
+const playerCount = ref(5)
+const playerNames = ref<string[]>(['', '', '', '', ''])
 const totalRounds = ref(10)
+const endMode = ref<GameEndMode>('all_rounds_completed')
 
 function updatePlayerCount() {
   const count = Math.max(2, Math.min(10, playerCount.value))
@@ -22,7 +24,7 @@ function updatePlayerCount() {
 
 function startGame() {
   const names = playerNames.value.map((n, i) => n.trim() || `玩家${i + 1}`)
-  emit('start', names, totalRounds.value)
+  emit('start', names, totalRounds.value, endMode.value)
 }
 </script>
 
@@ -30,7 +32,6 @@ function startGame() {
   <div class="setup fade-in">
     <div class="header">
       <h1>🎲 博饼</h1>
-      <p class="subtitle">马年春节家庭聚会</p>
     </div>
 
     <div class="card form-section">
@@ -43,12 +44,33 @@ function startGame() {
         </div>
       </div>
 
-      <div class="form-group">
+      <div v-if="endMode === 'all_rounds_completed'" class="form-group">
         <label>每人轮数</label>
         <div class="counter">
           <button class="btn-secondary counter-btn" @click="totalRounds = Math.max(1, totalRounds - 1)">−</button>
           <span class="counter-value">{{ totalRounds }}</span>
           <button class="btn-secondary counter-btn" @click="totalRounds = Math.min(30, totalRounds + 1)">+</button>
+        </div>
+      </div>
+      <div v-else class="mode-note">奖品发完即结束，不限制轮数。</div>
+
+      <div class="form-group">
+        <label>结束模式</label>
+        <div class="mode-switch">
+          <button
+            class="btn-secondary mode-btn"
+            :class="{ active: endMode === 'all_rounds_completed' }"
+            @click="endMode = 'all_rounds_completed'"
+          >
+            所有轮次完成
+          </button>
+          <button
+            class="btn-secondary mode-btn"
+            :class="{ active: endMode === 'all_prizes_distributed' }"
+            @click="endMode = 'all_prizes_distributed'"
+          >
+            所有奖品已发完
+          </button>
         </div>
       </div>
 
@@ -107,11 +129,6 @@ function startGame() {
   background-clip: text;
 }
 
-.subtitle {
-  color: var(--text-muted);
-  font-size: 1.1em;
-}
-
 .form-section {
   display: flex;
   flex-direction: column;
@@ -153,6 +170,29 @@ function startGame() {
   min-width: 40px;
   text-align: center;
   color: var(--gold);
+}
+
+.mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.mode-btn {
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mode-btn.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.mode-note {
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .name-list {

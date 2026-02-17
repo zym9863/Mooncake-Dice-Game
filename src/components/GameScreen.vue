@@ -3,13 +3,14 @@ import { ref, computed } from 'vue'
 import Dice from './Dice.vue'
 import { useDiceRoll, type DiceResult } from '../composables/useDiceRoll'
 import { useAudio } from '../composables/useAudio'
-import type { Player, Champion } from '../composables/useGameState'
+import type { Player, Champion, GameEndMode } from '../composables/useGameState'
 
 const props = defineProps<{
   players: Player[]
   currentPlayerIndex: number
   currentRound: number
   totalRounds: number
+  endMode: GameEndMode
   prizePool: Record<string, number>
   champion: Champion | null
 }>()
@@ -17,7 +18,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   rolled: [result: DiceResult]
   next: []
-  end: []
 }>()
 
 const { currentDice, isRolling, roll } = useDiceRoll()
@@ -106,13 +106,16 @@ function handleNext() {
   wasStolen.value = false
   lastResult.value = null
   prizeAwarded.value = ''
-
-  if (totalPrizes.value <= 0) {
-    emit('end')
-  } else {
-    emit('next')
-  }
+  emit('next')
 }
+
+const shouldShowResultButton = computed(() => {
+  if (props.endMode === 'all_prizes_distributed') {
+    return totalPrizes.value <= 0
+  }
+
+  return props.currentRound >= props.totalRounds && props.currentPlayerIndex >= props.players.length - 1
+})
 </script>
 
 <template>
@@ -192,7 +195,7 @@ function handleNext() {
         class="btn-gold roll-btn"
         @click="handleNext"
       >
-        {{ currentRound >= totalRounds && currentPlayerIndex >= players.length - 1 ? '查看结果' : '下一位' }}
+        {{ shouldShowResultButton ? '查看结果' : '下一位' }}
       </button>
     </div>
 
