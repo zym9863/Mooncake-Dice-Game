@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { PRIZE_META } from '../constants/prizeMeta'
 import type { GameEndMode } from '../composables/useGameState'
 
 const emit = defineEmits<{
@@ -14,255 +15,335 @@ const endMode = ref<GameEndMode>('all_rounds_completed')
 function updatePlayerCount() {
   const count = Math.max(2, Math.min(10, playerCount.value))
   playerCount.value = count
+
   while (playerNames.value.length < count) {
     playerNames.value.push('')
   }
+
   while (playerNames.value.length > count) {
     playerNames.value.pop()
   }
 }
 
 function startGame() {
-  const names = playerNames.value.map((n, i) => n.trim() || `玩家${i + 1}`)
+  const names = playerNames.value.map((name, index) => name.trim() || `玩家${index + 1}`)
   emit('start', names, totalRounds.value, endMode.value)
 }
 </script>
 
 <template>
-  <div class="setup fade-in">
-    <div class="header">
-      <h1>🎲 博饼</h1>
-    </div>
+  <div class="setup-page fade-in">
+    <section class="panel hero-panel">
+      <p class="hero-note">Mooncake Dice Game</p>
+      <h2>席开博饼</h2>
+      <p class="hero-subtitle">
+        配置玩家与局数后开局，按传统奖项顺序角逐。
+      </p>
+    </section>
 
-    <div class="card form-section">
-      <div class="form-group">
-        <label>玩家人数</label>
-        <div class="counter">
-          <button class="btn-secondary counter-btn" @click="playerCount = Math.max(2, playerCount - 1); updatePlayerCount()">−</button>
-          <span class="counter-value">{{ playerCount }}</span>
-          <button class="btn-secondary counter-btn" @click="playerCount = Math.min(10, playerCount + 1); updatePlayerCount()">+</button>
-        </div>
-      </div>
-
-      <div v-if="endMode === 'all_rounds_completed'" class="form-group">
-        <label>每人轮数</label>
-        <div class="counter">
-          <button class="btn-secondary counter-btn" @click="totalRounds = Math.max(1, totalRounds - 1)">−</button>
-          <span class="counter-value">{{ totalRounds }}</span>
-          <button class="btn-secondary counter-btn" @click="totalRounds = Math.min(30, totalRounds + 1)">+</button>
-        </div>
-      </div>
-      <div v-else class="mode-note">奖品发完即结束，不限制轮数。</div>
-
-      <div class="form-group">
-        <label>结束模式</label>
-        <div class="mode-switch">
-          <button
-            class="btn-secondary mode-btn"
-            :class="{ active: endMode === 'all_rounds_completed' }"
-            @click="endMode = 'all_rounds_completed'"
-          >
-            所有轮次完成
-          </button>
-          <button
-            class="btn-secondary mode-btn"
-            :class="{ active: endMode === 'all_prizes_distributed' }"
-            @click="endMode = 'all_prizes_distributed'"
-          >
-            所有奖品已发完
-          </button>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>玩家名字</label>
-        <div class="name-list">
-          <div v-for="(_, i) in playerNames" :key="i" class="name-input-row">
-            <span class="name-index">{{ i + 1 }}</span>
-            <input
-              v-model="playerNames[i]"
-              :placeholder="`玩家${i + 1}`"
-              @keydown.enter="startGame"
-            />
+    <section class="setup-grid">
+      <article class="panel control-panel">
+        <div class="group">
+          <label>玩家人数</label>
+          <div class="counter">
+            <button
+              type="button"
+              class="btn-secondary counter-btn"
+              @click="playerCount = Math.max(2, playerCount - 1); updatePlayerCount()"
+            >
+              −
+            </button>
+            <span class="counter-value">{{ playerCount }}</span>
+            <button
+              type="button"
+              class="btn-secondary counter-btn"
+              @click="playerCount = Math.min(10, playerCount + 1); updatePlayerCount()"
+            >
+              +
+            </button>
           </div>
         </div>
+
+        <div class="group">
+          <label>结束模式</label>
+          <div class="mode-switch">
+            <button
+              type="button"
+              class="btn-secondary mode-btn"
+              :class="{ active: endMode === 'all_rounds_completed' }"
+              @click="endMode = 'all_rounds_completed'"
+            >
+              所有轮次完成
+            </button>
+            <button
+              type="button"
+              class="btn-secondary mode-btn"
+              :class="{ active: endMode === 'all_prizes_distributed' }"
+              @click="endMode = 'all_prizes_distributed'"
+            >
+              奖品全部发完
+            </button>
+          </div>
+        </div>
+
+        <div v-if="endMode === 'all_rounds_completed'" class="group">
+          <label>每人轮数</label>
+          <div class="counter">
+            <button
+              type="button"
+              class="btn-secondary counter-btn"
+              @click="totalRounds = Math.max(1, totalRounds - 1)"
+            >
+              −
+            </button>
+            <span class="counter-value">{{ totalRounds }}</span>
+            <button
+              type="button"
+              class="btn-secondary counter-btn"
+              @click="totalRounds = Math.min(30, totalRounds + 1)"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        <p v-else class="mode-tip">奖品发完即结束，不限制轮数。</p>
+      </article>
+
+      <article class="panel names-panel">
+        <div class="panel-head">
+          <h3>玩家名单</h3>
+          <span>{{ playerCount }} 位</span>
+        </div>
+        <div class="name-list">
+          <label v-for="(_, index) in playerNames" :key="index" class="name-row">
+            <span class="name-index">{{ index + 1 }}</span>
+            <input
+              v-model="playerNames[index]"
+              :placeholder="`玩家${index + 1}`"
+              @keydown.enter="startGame"
+            >
+          </label>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel prize-panel">
+      <div class="panel-head">
+        <h3>奖池总览</h3>
+        <span>共 63 份</span>
       </div>
-    </div>
+      <div class="prize-grid">
+        <article
+          v-for="item in PRIZE_META"
+          :key="item.title"
+          class="prize-card"
+          :style="{ '--tone': item.color, '--surface': item.surface }"
+        >
+          <div class="prize-title">{{ item.title }}</div>
+          <div class="prize-count">× {{ item.count }}</div>
+        </article>
+      </div>
+    </section>
 
     <button class="btn-primary start-btn" @click="startGame">
-      开始博饼！
+      开始博饼
     </button>
-
-    <div class="rules-summary card">
-      <h3>奖品一览</h3>
-      <div class="rules-grid">
-        <div class="rule-item"><span class="rank champion">状元</span><span class="count">×1</span></div>
-        <div class="rule-item"><span class="rank bangyan">榜眼</span><span class="count">×2</span></div>
-        <div class="rule-item"><span class="rank tanhua">探花</span><span class="count">×4</span></div>
-        <div class="rule-item"><span class="rank jinshi">进士</span><span class="count">×8</span></div>
-        <div class="rule-item"><span class="rank juren">举人</span><span class="count">×16</span></div>
-        <div class="rule-item"><span class="rank xiucai">秀才</span><span class="count">×32</span></div>
-      </div>
-    </div>
   </div>
 </template>
 
 <style scoped>
-.setup {
+.setup-page {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px 0;
+  gap: 1rem;
 }
 
-.header {
-  text-align: center;
-  padding: 20px 0;
+.hero-panel,
+.control-panel,
+.names-panel,
+.prize-panel {
+  padding: 1rem 1.15rem;
 }
 
-.header h1 {
-  font-size: 2.5em;
-  margin-bottom: 8px;
-  background: linear-gradient(135deg, var(--gold), var(--gold-light));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.hero-note {
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(217, 190, 163, 0.8);
 }
 
-.form-section {
+.hero-panel h2 {
+  margin-top: 0.25rem;
+  font-size: clamp(1.65rem, 3.3vw, 2.2rem);
+  color: #f8d391;
+}
+
+.hero-subtitle {
+  margin-top: 0.45rem;
+  color: var(--text-soft);
+  font-size: 0.94rem;
+}
+
+.setup-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 1rem;
+}
+
+.control-panel,
+.names-panel {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 0.95rem;
 }
 
-.form-group {
+.group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.45rem;
 }
 
-.form-group label {
-  font-size: 14px;
-  color: var(--gold);
+.group label {
+  font-size: 0.82rem;
+  color: var(--text-soft);
   font-weight: 600;
 }
 
 .counter {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 0.8rem;
 }
 
 .counter-btn {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  aspect-ratio: 1;
+  border-radius: 999px;
   padding: 0;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
+  font-size: 1.2rem;
 }
 
 .counter-value {
-  font-size: 24px;
-  font-weight: 700;
-  min-width: 40px;
+  min-width: 42px;
   text-align: center;
-  color: var(--gold);
+  font-size: 1.3rem;
+  color: #f8d391;
+  font-weight: 700;
 }
 
 .mode-switch {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
 }
 
 .mode-btn {
-  padding: 10px 12px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 0.83rem;
 }
 
 .mode-btn.active {
-  border-color: var(--gold);
-  color: var(--gold);
-  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(247, 212, 141, 0.66);
+  color: #f7d48d;
+  box-shadow: inset 0 0 0 1px rgba(247, 212, 141, 0.2);
 }
 
-.mode-note {
-  font-size: 13px;
-  color: var(--text-muted);
+.mode-tip {
+  color: rgba(217, 190, 163, 0.88);
+  font-size: 0.82rem;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.panel-head h3 {
+  color: #f8d391;
+}
+
+.panel-head span {
+  color: rgba(217, 190, 163, 0.92);
+  font-size: 0.78rem;
 }
 
 .name-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
 }
 
-.name-input-row {
+.name-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.5rem;
 }
 
 .name-index {
   width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--red-dark);
-  color: white;
-  display: flex;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  flex-shrink: 0;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 0.72rem;
   font-weight: 700;
-  flex-shrink: 0;
+  color: #fff8ef;
+  background: linear-gradient(140deg, rgba(234, 99, 63, 0.9), rgba(169, 49, 27, 0.9));
+}
+
+.prize-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.prize-card {
+  border: 1px solid color-mix(in srgb, var(--tone) 45%, transparent);
+  border-radius: 12px;
+  padding: 0.65rem 0.75rem;
+  background: linear-gradient(130deg, var(--surface), rgba(14, 8, 13, 0.35));
+}
+
+.prize-title {
+  color: var(--tone);
+  font-weight: 700;
+}
+
+.prize-count {
+  margin-top: 0.15rem;
+  color: rgba(249, 239, 226, 0.86);
+  font-size: 0.83rem;
 }
 
 .start-btn {
   width: 100%;
-  padding: 16px;
-  font-size: 20px;
-  letter-spacing: 2px;
+  font-size: 1.05rem;
 }
 
-.rules-summary h3 {
-  text-align: center;
-  margin-bottom: 12px;
-  font-size: 16px;
+@media (max-width: 900px) {
+  .setup-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .name-list {
+    grid-template-columns: 1fr;
+  }
 }
 
-.rules-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
+@media (max-width: 640px) {
+  .hero-panel,
+  .control-panel,
+  .names-panel,
+  .prize-panel {
+    padding: 0.9rem 0.9rem;
+  }
 
-.rule-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 10px;
-  background: var(--bg-card-light);
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.rank {
-  font-weight: 600;
-}
-
-.champion { color: var(--gold); }
-.bangyan { color: #C084FC; }
-.tanhua { color: var(--red-light); }
-.jinshi { color: #67E8F9; }
-.juren { color: #86EFAC; }
-.xiucai { color: var(--text-muted); }
-
-.count {
-  color: var(--text-muted);
-  font-size: 12px;
+  .prize-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 </style>

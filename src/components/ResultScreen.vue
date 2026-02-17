@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Player, Champion } from '../composables/useGameState'
+import { PRIZE_META, getPrizeColor, getPrizeSurface } from '../constants/prizeMeta'
+import type { Champion, Player } from '../composables/useGameState'
 
 const props = defineProps<{
   players: Player[]
@@ -12,252 +13,323 @@ const emit = defineEmits<{
   restart: []
 }>()
 
-const medals = ['🥇', '🥈', '🥉']
+const topThree = computed(() => props.ranking.slice(0, 3))
+const medalTitle = ['冠席', '次席', '三席']
 
-const winner = computed(() => props.ranking[0])
+function summarizePrizes(player: Player) {
+  return PRIZE_META.map((item) => ({
+    title: item.title,
+    count: player.prizes.filter((prize) => prize.rankTitle === item.title).length,
+  })).filter((item) => item.count > 0)
+}
 
-function getPrizeCount(player: Player, title: string): number {
-  return player.prizes.filter(p => p.rankTitle === title).length
+function prizeStyle(title: string) {
+  return {
+    '--tone': getPrizeColor(title),
+    '--surface': getPrizeSurface(title),
+  }
 }
 </script>
 
 <template>
-  <div class="result-screen fade-in">
-    <div class="header">
-      <h1>🎊 博饼结束 🎊</h1>
-      <p class="subtitle">恭喜各位！</p>
-    </div>
+  <div class="result-page fade-in">
+    <section class="panel hero-panel">
+      <p class="hero-note">Final Result</p>
+      <h2>博饼结算</h2>
+      <p class="hero-subtitle">按奖项权重计算总分，恭喜所有参与者。</p>
+    </section>
 
-    <!-- 冠军展示 -->
-    <div v-if="winner" class="winner-card card">
-      <div class="winner-medal">🏆</div>
-      <div class="winner-name">{{ winner.name }}</div>
-      <div class="winner-score">总分：{{ winner.score }}</div>
-      <div class="winner-prizes">
-        <span
-          v-for="(prize, j) in winner.prizes"
-          :key="j"
-          class="prize-tag"
-          :class="'tag-' + prize.rankTitle"
-        >
-          {{ prize.rankTitle }}
-        </span>
-      </div>
-    </div>
-
-    <!-- 排行榜 -->
-    <div class="card ranking-card">
-      <h3>最终排名</h3>
-      <div class="ranking-list">
-        <div
-          v-for="(player, i) in ranking"
-          :key="player.index"
-          class="ranking-row"
-          :class="{ 'top-3': i < 3 }"
-        >
-          <div class="rank-info">
-            <span class="rank-pos">{{ i < 3 ? medals[i] : `${i + 1}` }}</span>
-            <span class="rank-name">{{ player.name }}</span>
-          </div>
-          <div class="rank-details">
-            <div class="rank-prizes">
-              <span v-if="getPrizeCount(player, '状元')">状元×{{ getPrizeCount(player, '状元') }}</span>
-              <span v-if="getPrizeCount(player, '榜眼')">榜眼×{{ getPrizeCount(player, '榜眼') }}</span>
-              <span v-if="getPrizeCount(player, '探花')">探花×{{ getPrizeCount(player, '探花') }}</span>
-              <span v-if="getPrizeCount(player, '进士')">进士×{{ getPrizeCount(player, '进士') }}</span>
-              <span v-if="getPrizeCount(player, '举人')">举人×{{ getPrizeCount(player, '举人') }}</span>
-              <span v-if="getPrizeCount(player, '秀才')">秀才×{{ getPrizeCount(player, '秀才') }}</span>
-              <span v-if="player.prizes.length === 0" class="no-prizes">无奖品</span>
-            </div>
-            <div class="rank-score">{{ player.score }}分</div>
-          </div>
+    <section class="podium-grid">
+      <article
+        v-for="(player, index) in topThree"
+        :key="player.index"
+        class="panel podium-card"
+        :class="`podium-${index + 1}`"
+      >
+        <span class="podium-rank">{{ medalTitle[index] }}</span>
+        <h3>{{ player.name }}</h3>
+        <strong>{{ player.score }} 分</strong>
+        <div class="podium-prizes">
+          <span
+            v-for="item in summarizePrizes(player)"
+            :key="item.title"
+            class="prize-pill"
+            :style="prizeStyle(item.title)"
+          >
+            {{ item.title }} × {{ item.count }}
+          </span>
+          <small v-if="summarizePrizes(player).length === 0">无奖项</small>
         </div>
-      </div>
-    </div>
+      </article>
+    </section>
 
-    <!-- 状元信息 -->
-    <div v-if="champion" class="card champion-card">
-      <div class="champion-title">🏆 状元</div>
-      <div class="champion-name">{{ players[champion.playerIndex]?.name }}</div>
-      <div class="champion-detail">{{ champion.rankName }}</div>
-    </div>
+    <section class="panel ranking-panel">
+      <div class="panel-head">
+        <h3>完整排名</h3>
+        <span>{{ ranking.length }} 位玩家</span>
+      </div>
+      <div class="ranking-list">
+        <article
+          v-for="(player, index) in ranking"
+          :key="player.index"
+          class="rank-row"
+        >
+          <div class="rank-main">
+            <span class="rank-number">{{ index + 1 }}</span>
+            <strong>{{ player.name }}</strong>
+          </div>
+          <div class="rank-meta">
+            <div class="rank-prizes">
+              <span
+                v-for="item in summarizePrizes(player)"
+                :key="item.title"
+                class="mini-pill"
+                :style="prizeStyle(item.title)"
+              >
+                {{ item.title }} × {{ item.count }}
+              </span>
+              <small v-if="summarizePrizes(player).length === 0">无奖项</small>
+            </div>
+            <strong class="rank-score">{{ player.score }} 分</strong>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section v-if="champion" class="panel champion-panel">
+      <span>本局状元</span>
+      <h3>{{ players[champion.playerIndex]?.name }}</h3>
+      <p>{{ champion.rankName }}</p>
+    </section>
 
     <button class="btn-primary restart-btn" @click="emit('restart')">
-      再来一局！
+      再来一局
     </button>
   </div>
 </template>
 
 <style scoped>
-.result-screen {
+.result-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 0;
+  gap: 1rem;
 }
 
-.header {
-  text-align: center;
-  padding: 16px 0;
+.hero-panel {
+  padding: 0.95rem 1.1rem;
 }
 
-.header h1 {
-  font-size: 2em;
-  background: linear-gradient(135deg, var(--gold), var(--red), var(--gold));
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: shimmer 3s linear infinite;
+.hero-note {
+  color: rgba(217, 190, 163, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.72rem;
 }
 
-.subtitle {
-  color: var(--text-muted);
-  margin-top: 4px;
+.hero-panel h2 {
+  margin-top: 0.25rem;
+  color: #f8d391;
+  font-size: clamp(1.6rem, 3.4vw, 2.1rem);
 }
 
-.winner-card {
-  text-align: center;
-  padding: 24px;
-  background: linear-gradient(135deg, var(--bg-card), rgba(245,158,11,0.08));
-  border-color: var(--gold-dark);
+.hero-subtitle {
+  margin-top: 0.4rem;
+  color: var(--text-soft);
+  font-size: 0.9rem;
 }
 
-.winner-medal {
-  font-size: 48px;
-  margin-bottom: 8px;
+.podium-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
 }
 
-.winner-name {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--gold);
+.podium-card {
+  padding: 0.95rem 0.9rem;
+  display: grid;
+  gap: 0.35rem;
 }
 
-.winner-score {
-  color: var(--text-muted);
-  margin: 4px 0 12px;
+.podium-rank {
+  font-size: 0.74rem;
+  color: rgba(217, 190, 163, 0.82);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
 
-.winner-prizes {
+.podium-card h3 {
+  color: #f9d489;
+  font-size: 1.2rem;
+}
+
+.podium-card strong {
+  color: #fff2de;
+  font-size: 1.05rem;
+}
+
+.podium-prizes {
+  margin-top: 0.15rem;
   display: flex;
-  gap: 6px;
-  justify-content: center;
   flex-wrap: wrap;
+  gap: 0.3rem;
 }
 
-.prize-tag {
-  font-size: 12px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-weight: 600;
+.podium-1 {
+  border-color: rgba(246, 179, 67, 0.54);
 }
 
-.tag-状元 { background: rgba(245,158,11,0.2); color: #F59E0B; }
-.tag-榜眼 { background: rgba(192,132,252,0.2); color: #C084FC; }
-.tag-探花 { background: rgba(252,165,165,0.2); color: #FCA5A5; }
-.tag-进士 { background: rgba(103,232,249,0.2); color: #67E8F9; }
-.tag-举人 { background: rgba(134,239,172,0.2); color: #86EFAC; }
-.tag-秀才 { background: rgba(212,160,160,0.2); color: #D4A0A0; }
-
-.ranking-card h3 {
-  text-align: center;
-  margin-bottom: 12px;
-  font-size: 16px;
+.podium-2 {
+  border-color: rgba(142, 197, 255, 0.45);
 }
 
-.ranking-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.podium-3 {
+  border-color: rgba(255, 159, 126, 0.45);
 }
 
-.ranking-row {
+.prize-pill,
+.mini-pill {
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
+  color: var(--tone);
+  background: color-mix(in srgb, var(--surface) 68%, rgba(15, 9, 13, 0.56));
+  font-weight: 700;
+}
+
+.prize-pill {
+  font-size: 0.72rem;
+  padding: 0.14rem 0.45rem;
+}
+
+.mini-pill {
+  font-size: 0.69rem;
+  padding: 0.1rem 0.4rem;
+}
+
+.podium-prizes small,
+.rank-prizes small {
+  color: rgba(217, 190, 163, 0.74);
+  font-size: 0.72rem;
+}
+
+.ranking-panel {
+  padding: 0.9rem;
+}
+
+.panel-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 12px;
-  background: var(--bg-card-light);
-  border-radius: 8px;
 }
 
-.ranking-row.top-3 {
-  border: 1px solid rgba(245,158,11,0.2);
+.panel-head span {
+  color: rgba(217, 190, 163, 0.8);
+  font-size: 0.75rem;
 }
 
-.rank-info {
+.ranking-list {
+  margin-top: 0.65rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.rank-row {
+  border-radius: 10px;
+  border: 1px solid rgba(246, 179, 67, 0.12);
+  background: rgba(29, 14, 22, 0.66);
+  padding: 0.58rem 0.65rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.rank-main {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.5rem;
 }
 
-.rank-pos {
-  font-size: 18px;
-  min-width: 28px;
-  text-align: center;
+.rank-number {
+  width: 22px;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
   font-weight: 700;
-  color: var(--text-muted);
+  color: #f8d391;
+  background: rgba(246, 179, 67, 0.18);
 }
 
-.rank-name {
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.rank-details {
+.rank-meta {
   text-align: right;
+  display: grid;
+  gap: 0.25rem;
 }
 
 .rank-prizes {
   display: flex;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-muted);
   flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 0.26rem;
 }
 
 .rank-score {
-  font-size: 13px;
-  color: var(--gold);
-  font-weight: 600;
-  margin-top: 2px;
+  color: #f9d489;
+  font-size: 0.92rem;
 }
 
-.no-prizes {
-  color: var(--text-muted);
-  opacity: 0.5;
-}
-
-.champion-card {
+.champion-panel {
+  padding: 0.85rem 1rem;
   text-align: center;
-  padding: 16px;
-  border-color: var(--gold-dark);
-  background: linear-gradient(135deg, rgba(245,158,11,0.05), rgba(220,38,38,0.05));
+  border-color: rgba(246, 179, 67, 0.46);
+  background:
+    linear-gradient(130deg, rgba(246, 179, 67, 0.14), rgba(22, 12, 18, 0.76)),
+    linear-gradient(145deg, rgba(39, 19, 28, 0.8), rgba(28, 14, 22, 0.86));
 }
 
-.champion-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--gold);
+.champion-panel span {
+  color: rgba(217, 190, 163, 0.88);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-.champion-name {
-  font-size: 22px;
-  font-weight: 700;
-  margin: 4px 0;
+.champion-panel h3 {
+  margin-top: 0.2rem;
+  color: #f8d391;
+  font-size: 1.35rem;
 }
 
-.champion-detail {
-  font-size: 14px;
-  color: var(--text-muted);
+.champion-panel p {
+  margin-top: 0.15rem;
+  color: rgba(249, 239, 226, 0.82);
 }
 
 .restart-btn {
   width: 100%;
-  padding: 16px;
-  font-size: 18px;
-  letter-spacing: 2px;
-  margin-top: 8px;
+  font-size: 1.02rem;
+}
+
+@media (max-width: 920px) {
+  .podium-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .rank-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rank-meta {
+    text-align: left;
+  }
+
+  .rank-prizes {
+    justify-content: flex-start;
+  }
 }
 </style>
