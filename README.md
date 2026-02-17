@@ -1,5 +1,108 @@
-# Vue 3 + TypeScript + Vite
+[English](README-EN.md) | **中文**
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+# 🎲 博饼游戏 (Mooncake Dice Game)
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+基于 Vite + Vue 3 + TypeScript 实现的中国传统博饼游戏，支持多人同设备轮流掷骰子，中国风喜庆视觉风格，含骰子动画和音效。
+
+## 🎮 游戏简介
+
+博饼是闽南地区中秋节的传统习俗，玩家通过掷骰子赢取不同等级的奖品。本游戏完整实现了传统博饼规则，包含抢状元机制和精美的视觉效果。
+
+## 📜 游戏规则
+
+6 颗骰子，判定优先级从高到低：
+
+| 排名 | 名称 | 条件 | 奖品数量 |
+|------|------|------|----------|
+| 状元(六杯红) | 六杯红 | 6个四 | 1（共享状元池） |
+| 状元(六杯黑) | 六杯黑 | 6个相同(非四) | 1 |
+| 状元(五红) | 五红 | 5个四 | 1 |
+| 状元(五子) | 五子 | 5个相同(非四) | 1 |
+| 状元(四红) | 四红 | 4个四 | 1 |
+| 榜眼 | 对堂 | 1-2-3-4-5-6各一 | 2 |
+| 探花 | 三红 | 恰好3个四 | 4 |
+| 进士 | 四进 | 4个相同(非四红) | 8 |
+| 举人 | 二举 | 恰好2个四 | 16 |
+| 秀才 | 一秀 | 恰好1个四 | 32 |
+
+**抢状元规则**：状元只有1份，后来者掷出更高级别可以抢走前任的状元。
+
+## 🚀 快速开始
+
+### 环境要求
+
+- Node.js 18+
+- pnpm (推荐) 或 npm
+
+### 安装依赖
+
+```bash
+pnpm install
+```
+
+### 启动开发服务器
+
+```bash
+pnpm dev
+```
+
+### 构建生产版本
+
+```bash
+pnpm build
+```
+
+### 预览生产版本
+
+```bash
+pnpm preview
+```
+
+## 🏗️ 项目结构
+
+```
+src/
+├── App.vue                    # 根组件，游戏状态机
+├── main.ts                    # 应用入口
+├── style.css                  # 全局样式
+├── components/
+│   ├── SetupScreen.vue        # 设置界面：玩家人数、名字
+│   ├── GameScreen.vue         # 游戏主界面
+│   ├── Dice.vue               # 单个骰子（CSS 3D动画）
+│   └── ResultScreen.vue       # 结算界面：最终排名
+└── composables/
+    ├── useGameState.ts        # 游戏状态管理（玩家、轮次、奖品池）
+    ├── useDiceRoll.ts         # 骰子逻辑（随机、判定）
+    └── useAudio.ts            # Web Audio API 音效
+```
+
+## ✨ 功能特性
+
+- 🎲 **完整博饼规则**：支持所有传统奖项判定
+- 👥 **多人游戏**：支持 2-10 位玩家同设备轮流游戏
+- 🏆 **抢状元机制**：高级别状元可抢夺低级别状元
+- 🎨 **中国风视觉**：红金配色，喜庆风格
+- 🎬 **骰子动画**：CSS 3D 翻滚动画效果
+- 🔊 **音效反馈**：Web Audio API 合成音效，无需外部文件
+- 📱 **响应式设计**：移动端优先，适配各种屏幕
+
+## 🛠️ 技术栈
+
+- **框架**：Vue 3 (Composition API + `<script setup>`)
+- **语言**：TypeScript
+- **构建工具**：Vite
+- **样式**：原生 CSS（中国风设计）
+- **音效**：Web Audio API
+
+## 🎯 游戏流程
+
+1. **设置界面**：输入 2-10 位玩家名字
+2. **游戏开始**：按顺序轮流掷骰子
+3. **每次掷骰**：动画 1.2s → 显示结果 → 自动分配奖品
+4. **抢状元**：后来者掷出更高级别状元，自动抢夺
+5. **结束条件**：所有轮次完成，或所有奖品已发完
+6. **结算**：显示每人获得的奖品和最终排名
+
+## 📄 许可证
+
+MIT License
