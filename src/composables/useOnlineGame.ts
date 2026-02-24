@@ -13,10 +13,29 @@ interface SessionPayload {
   expiresAt: string
 }
 
-type ConnectionStatus = 'disconnected' | 'connecting' | 'connected'
+export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected'
 
 const SESSION_STORAGE_KEY = 'mooncake-online-session'
 const ROOM_STORAGE_KEY = 'mooncake-online-room-code'
+const I18N_ERROR_PREFIX = 'i18n:'
+
+export function i18nError(key: string) {
+  return `${I18N_ERROR_PREFIX}${key}`
+}
+
+export function unwrapI18nErrorKey(message: string): string | null {
+  if (!message.startsWith(I18N_ERROR_PREFIX)) {
+    return null
+  }
+  return message.slice(I18N_ERROR_PREFIX.length)
+}
+
+export function normalizeUnknownError(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+  return i18nError('error.unknown')
+}
 
 export function useOnlineGame() {
   const session = ref<SessionPayload | null>(loadSession())
@@ -158,12 +177,16 @@ export function useOnlineGame() {
     }
 
     socket.onerror = () => {
-      errorMessage.value = 'Realtime connection error.'
+      errorMessage.value = i18nError('error.realtimeConnection')
     }
 
     socket.onmessage = event => {
-      const message = JSON.parse(String(event.data)) as ServerToClientMessage
-      handleServerMessage(message)
+      try {
+        const message = JSON.parse(String(event.data)) as ServerToClientMessage
+        handleServerMessage(message)
+      } catch {
+        errorMessage.value = i18nError('error.serverUnknown')
+      }
     }
   }
 
@@ -206,7 +229,7 @@ export function useOnlineGame() {
         setRoomSnapshot(message.payload.room, message.payload.version)
         return
       case 'error':
-        errorMessage.value = message.payload.message
+        errorMessage.value = mapServerError(message.payload.code, message.payload.message)
         return
       case 'game:rolled':
       case 'game:turn_changed':
@@ -219,7 +242,7 @@ export function useOnlineGame() {
 
   function send(message: ClientToServerMessage) {
     if (!socket || socket.readyState !== WebSocket.OPEN) {
-      throw new Error('Realtime connection is not ready')
+      throw new Error(i18nError('error.realtimeNotReady'))
     }
     socket.send(JSON.stringify(message))
   }
@@ -259,14 +282,14 @@ export function useOnlineGame() {
 
   function requireSession() {
     if (!session.value) {
-      throw new Error('Session is not ready')
+      throw new Error(i18nError('error.sessionNotReady'))
     }
     return session.value
   }
 
   function requireRoomCode() {
     if (!roomState.value) {
-      throw new Error('Room is not joined')
+      throw new Error(i18nError('error.roomNotJoined'))
     }
     return roomState.value.roomCode
   }
@@ -319,11 +342,48 @@ function loadSession(): SessionPayload | null {
   }
 }
 
+function mapServerError(code: string | undefined, message: string | undefined) {
+  const key = mapServerMessageToErrorKey(message)
+  if (key) {
+    return i18nError(key)
+  }
+  if (code === 'BAD_REQUEST') {
+    return i18nError('error.requestFailed')
+  }
+  if (message) {
+    return message
+  }
+  return i18nError('error.requestFailed')
+}
+
+function mapServerMessageToErrorKey(message: string | undefined): string | null {
+  if (!message) {
+    return null
+  }
+
+  const normalized = message.toLowerCase()
+  if (normalized.includes('room not found')) return 'error.roomNotFound'
+  if (normalized.includes('invalid room code')) return 'error.invalidRoomCode'
+  if (normalized.includes('invalid or expired session')) return 'error.sessionInvalid'
+  if (normalized.includes('sessiontoken is required')) return 'error.sessionRequired'
+  if (normalized.includes('you are not in this room')) return 'error.notInRoom'
+  if (normalized.includes('player not in room')) return 'error.notInRoom'
+  if (normalized.includes('only host can start the room')) return 'error.onlyHostCanStart'
+  if (normalized.includes('it is not your turn')) return 'error.notYourTurn'
+  if (normalized.includes('at least 2 players are required')) return 'error.minPlayersRequired'
+  if (normalized.includes('game already started')) return 'error.gameAlreadyStarted'
+  if (normalized.includes('room is already started')) return 'error.roomAlreadyStarted'
+  if (normalized.includes('current turn already rolled')) return 'error.turnAlreadyRolled'
+  if (normalized.includes('you must roll before moving to the next turn')) return 'error.rollBeforeNext'
+  if (normalized.includes('unknown server error')) return 'error.serverUnknown'
+  return null
+}
+
 async function readError(response: Response) {
   try {
-    const payload = (await response.json()) as { message?: string }
-    return payload.message ?? `HTTP ${response.status}`
+    const payload = (await response.json()) as { code?: string; message?: string }
+    return mapServerError(payload.code, payload.message)
   } catch {
-    return `HTTP ${response.status}`
+    return i18nError('error.requestFailed')
   }
 }

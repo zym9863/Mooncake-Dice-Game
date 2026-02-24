@@ -1,13 +1,28 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { type GameEndMode, PRIZE_LABELS, PRIZE_ORDER, RANK_SCORE } from '../shared/game-types'
-import { useOnlineGame } from './composables/useOnlineGame'
+import { useI18n } from 'vue-i18n'
+import {
+  type GameEndMode,
+  PRIZE_ORDER,
+  RANK_SCORE,
+  type RankType,
+  type PrizeTier,
+} from '../shared/game-types'
+import { type Locale, setLocale, SUPPORTED_LOCALES } from './i18n'
+import {
+  i18nError,
+  normalizeUnknownError,
+  unwrapI18nErrorKey,
+  useOnlineGame,
+} from './composables/useOnlineGame'
 
 const nickname = ref('')
 const joinCodeInput = ref('')
 const totalRounds = ref(10)
 const endMode = ref<GameEndMode>('all_rounds_completed')
 const isSubmitting = ref(false)
+
+const { t, locale } = useI18n()
 
 const {
   session,
@@ -33,6 +48,12 @@ const {
   resetSession,
 } = useOnlineGame()
 
+const localeOptions = SUPPORTED_LOCALES
+const selectedLocale = computed<Locale>({
+  get: () => locale.value as Locale,
+  set: value => setLocale(value),
+})
+
 const ranking = computed(() => {
   if (!roomState.value) return []
   return [...roomState.value.players]
@@ -48,6 +69,9 @@ const totalPrizesLeft = computed(() => {
   if (!roomState.value) return 0
   return Object.values(roomState.value.prizePool).reduce((sum, count) => sum + count, 0)
 })
+
+const connectionStatusLabel = computed(() => t(`status.connection.${connectionStatus.value}`))
+const localizedErrorMessage = computed(() => translateError(errorMessage.value))
 
 async function handleCreateSession() {
   if (!nickname.value.trim()) return
@@ -91,12 +115,43 @@ function handleResetSession() {
   resetSession()
 }
 
+function prizeLabel(tier: PrizeTier) {
+  return t(`prize.${tier}`)
+}
+
+function rankLabel(rank: RankType | null | undefined, fallbackName = '') {
+  if (!rank) {
+    return t('rank.no_rank')
+  }
+  const key = `rank.${rank}`
+  const translated = t(key)
+  if (translated === key) {
+    return fallbackName || t('rank.no_rank')
+  }
+  return translated
+}
+
+function playerConnectionLabel(connected: boolean) {
+  return connected ? t('status.player.online') : t('status.player.offline')
+}
+
+function translateError(message: string) {
+  if (!message) {
+    return ''
+  }
+  const key = unwrapI18nErrorKey(message)
+  if (key) {
+    return t(key)
+  }
+  return message
+}
+
 async function submit(task: () => Promise<void> | void) {
   isSubmitting.value = true
   try {
     await task()
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Unknown error'
+    errorMessage.value = normalizeUnknownError(error)
   } finally {
     isSubmitting.value = false
   }
@@ -106,8 +161,8 @@ onMounted(async () => {
   if (session.value && joiningRoomCode.value) {
     try {
       await refreshRoomState()
-    } catch (error) {
-      errorMessage.value = error instanceof Error ? error.message : 'Failed to reconnect room'
+    } catch {
+      errorMessage.value = i18nError('error.reconnectFailed')
     }
   }
 })
@@ -116,56 +171,66 @@ onMounted(async () => {
 <template>
   <main class="app-shell">
     <header class="brand-banner">
-      <p class="banner-note">Realtime Multiplayer</p>
-      <h1>Mooncake Dice Game</h1>
-      <p class="banner-sub">Server authoritative room mode with reconnect support.</p>
+      <div class="banner-top">
+        <p class="banner-note">{{ t('banner.note') }}</p>
+        <label class="locale-switch">
+          <span>{{ t('language.label') }}</span>
+          <select v-model="selectedLocale">
+            <option v-for="code in localeOptions" :key="code" :value="code">
+              {{ t(`language.${code}`) }}
+            </option>
+          </select>
+        </label>
+      </div>
+      <h1>{{ t('banner.title') }}</h1>
+      <p class="banner-sub">{{ t('banner.subtitle') }}</p>
     </header>
 
-    <section v-if="errorMessage" class="panel error-banner">
-      {{ errorMessage }}
+    <section v-if="localizedErrorMessage" class="panel error-banner">
+      {{ localizedErrorMessage }}
     </section>
 
     <section v-if="!session" class="panel card-block">
-      <h2>Create Session</h2>
-      <p>Pick a nickname to start playing online.</p>
+      <h2>{{ t('session.createTitle') }}</h2>
+      <p>{{ t('session.createDescription') }}</p>
       <div class="row">
-        <input v-model="nickname" placeholder="Your nickname">
+        <input v-model="nickname" :placeholder="t('session.nicknamePlaceholder')">
         <button class="btn-primary" :disabled="isSubmitting || !nickname.trim()" @click="handleCreateSession">
-          Continue
+          {{ t('session.continue') }}
         </button>
       </div>
     </section>
 
     <section v-else-if="!roomState" class="lobby-grid">
       <article class="panel card-block">
-        <h2>Welcome, {{ session.nickname }}</h2>
-        <p>Create a room and invite friends with a room code.</p>
+        <h2>{{ t('lobby.welcome', { name: session.nickname }) }}</h2>
+        <p>{{ t('lobby.createRoomDescription') }}</p>
 
         <label class="field">
-          <span>Game end mode</span>
+          <span>{{ t('lobby.endMode') }}</span>
           <select v-model="endMode">
-            <option value="all_rounds_completed">All rounds completed</option>
-            <option value="all_prizes_distributed">All prizes distributed</option>
+            <option value="all_rounds_completed">{{ t('lobby.endModeAllRounds') }}</option>
+            <option value="all_prizes_distributed">{{ t('lobby.endModeAllPrizes') }}</option>
           </select>
         </label>
 
         <label class="field" v-if="endMode === 'all_rounds_completed'">
-          <span>Total rounds</span>
+          <span>{{ t('lobby.totalRounds') }}</span>
           <input v-model.number="totalRounds" type="number" min="1" max="30">
         </label>
 
         <button class="btn-primary" :disabled="isSubmitting" @click="handleCreateRoom">
-          Create Room
+          {{ t('lobby.createRoom') }}
         </button>
       </article>
 
       <article class="panel card-block">
-        <h2>Join Room</h2>
-        <p>Enter room code from host.</p>
+        <h2>{{ t('lobby.joinRoomTitle') }}</h2>
+        <p>{{ t('lobby.joinRoomDescription') }}</p>
         <div class="row">
-          <input v-model="joinCodeInput" placeholder="e.g. 9K4Q2A" maxlength="8">
+          <input v-model="joinCodeInput" :placeholder="t('lobby.roomCodePlaceholder')" maxlength="8">
           <button class="btn-gold" :disabled="isSubmitting || !joinCodeInput.trim()" @click="handleJoinRoom">
-            Join
+            {{ t('lobby.join') }}
           </button>
         </div>
 
@@ -175,11 +240,11 @@ onMounted(async () => {
           :disabled="isSubmitting"
           @click="handleReconnect"
         >
-          Reconnect {{ joiningRoomCode }}
+          {{ t('lobby.reconnect', { roomCode: joiningRoomCode }) }}
         </button>
 
         <button class="btn-secondary" :disabled="isSubmitting" @click="handleResetSession">
-          Change Nickname
+          {{ t('lobby.changeNickname') }}
         </button>
       </article>
     </section>
@@ -187,40 +252,40 @@ onMounted(async () => {
     <section v-else class="room-grid">
       <article class="panel card-block room-head">
         <div>
-          <h2>Room {{ roomState.roomCode }}</h2>
-          <p>Version #{{ roomVersion }} · You are {{ me?.name ?? session.nickname }}</p>
+          <h2>{{ t('room.title', { roomCode: roomState.roomCode }) }}</h2>
+          <p>{{ t('room.versionAndUser', { version: roomVersion, name: me?.name ?? session.nickname }) }}</p>
         </div>
         <div class="status">
-          <span>{{ roomState.phase.toUpperCase() }}</span>
-          <small>{{ connectionStatus }}</small>
+          <span>{{ t(`status.phase.${roomState.phase}`) }}</span>
+          <small>{{ connectionStatusLabel }}</small>
         </div>
       </article>
 
       <article v-if="roomState.phase === 'waiting'" class="panel card-block">
-        <h3>Waiting Room</h3>
-        <p>{{ roomState.players.length }} players joined. Host can start when at least 2 players are ready.</p>
+        <h3>{{ t('room.waitingTitle') }}</h3>
+        <p>{{ t('room.waitingDescription', { count: roomState.players.length }) }}</p>
         <ul class="player-list">
           <li v-for="player in roomState.players" :key="player.playerId">
             <span>{{ player.name }}</span>
-            <small>{{ player.connected ? 'online' : 'offline' }}</small>
+            <small>{{ playerConnectionLabel(player.connected) }}</small>
           </li>
         </ul>
         <div class="actions">
           <button class="btn-primary" :disabled="!isHost || isSubmitting" @click="handleStartRoom">
-            Start Game
+            {{ t('room.startGame') }}
           </button>
           <button class="btn-secondary" :disabled="isSubmitting" @click="handleLeaveRoom">
-            Leave Room
+            {{ t('room.leaveRoom') }}
           </button>
         </div>
       </article>
 
       <template v-else>
         <article class="panel card-block gameplay">
-          <h3>Turn</h3>
-          <p>Current: <strong>{{ currentPlayer?.name }}</strong></p>
-          <p>Round: {{ roomState.currentRound }} / {{ roomState.totalRounds }}</p>
-          <p>Prizes left: {{ totalPrizesLeft }}</p>
+          <h3>{{ t('room.turnTitle') }}</h3>
+          <p>{{ t('room.currentPlayer', { name: currentPlayer?.name ?? '-' }) }}</p>
+          <p>{{ t('room.round', { current: roomState.currentRound, total: roomState.totalRounds }) }}</p>
+          <p>{{ t('room.prizesLeft', { count: totalPrizesLeft }) }}</p>
 
           <div class="dice-row">
             <span v-for="(value, idx) in roomState.lastResult?.dice ?? [1, 1, 1, 1, 1, 1]" :key="idx" class="die">
@@ -229,33 +294,33 @@ onMounted(async () => {
           </div>
 
           <p v-if="roomState.lastResult" class="roll-result">
-            {{ roomState.lastResult.rankName || 'No Rank' }}
-            <span v-if="roomState.lastPrizeAwarded"> · {{ PRIZE_LABELS[roomState.lastPrizeAwarded] }}</span>
-            <span v-if="roomState.championStolen"> · Champion stolen</span>
+            {{ rankLabel(roomState.lastResult.rank, roomState.lastResult.rankName) }}
+            <span v-if="roomState.lastPrizeAwarded"> - {{ prizeLabel(roomState.lastPrizeAwarded) }}</span>
+            <span v-if="roomState.championStolen"> - {{ t('room.championStolen') }}</span>
           </p>
 
           <div v-if="roomState.phase === 'playing'" class="actions">
             <button class="btn-primary" :disabled="!canRoll || isSubmitting" @click="handleRoll">
-              {{ isCurrentTurn ? 'Roll Dice' : 'Waiting Turn' }}
+              {{ isCurrentTurn ? t('room.rollDice') : t('room.waitingTurn') }}
             </button>
             <button class="btn-gold" :disabled="!canNext || isSubmitting" @click="handleNext">
-              Next Turn
+              {{ t('room.nextTurn') }}
             </button>
           </div>
         </article>
 
         <article class="panel card-block">
-          <h3>Prize Pool</h3>
+          <h3>{{ t('room.prizePoolTitle') }}</h3>
           <ul class="prize-list">
             <li v-for="tier in PRIZE_ORDER" :key="tier">
-              <span>{{ PRIZE_LABELS[tier] }}</span>
+              <span>{{ prizeLabel(tier) }}</span>
               <strong>{{ roomState.prizePool[tier] }}</strong>
             </li>
           </ul>
         </article>
 
         <article class="panel card-block">
-          <h3>Players</h3>
+          <h3>{{ t('room.playersTitle') }}</h3>
           <ul class="player-list">
             <li
               v-for="(player, index) in roomState.players"
@@ -264,15 +329,15 @@ onMounted(async () => {
             >
               <div>
                 <strong>{{ player.name }}</strong>
-                <small>{{ player.connected ? 'online' : 'offline' }}</small>
+                <small>{{ playerConnectionLabel(player.connected) }}</small>
               </div>
-              <span>{{ player.prizes.length }} prizes</span>
+              <span>{{ t('room.playerPrizeCount', { count: player.prizes.length }) }}</span>
             </li>
           </ul>
         </article>
 
         <article v-if="roomState.phase === 'result'" class="panel card-block">
-          <h3>Final Ranking</h3>
+          <h3>{{ t('room.finalRankingTitle') }}</h3>
           <ol class="ranking-list">
             <li v-for="player in ranking" :key="player.playerId">
               <span>{{ player.name }}</span>
@@ -280,7 +345,7 @@ onMounted(async () => {
             </li>
           </ol>
           <button class="btn-secondary" :disabled="isSubmitting" @click="handleLeaveRoom">
-            Back to Lobby
+            {{ t('room.backToLobby') }}
           </button>
         </article>
       </template>
@@ -306,11 +371,35 @@ onMounted(async () => {
   box-shadow: 0 18px 36px rgba(8, 2, 6, 0.45);
 }
 
+.banner-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+}
+
 .banner-note {
   font-size: 0.72rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: rgba(220, 200, 166, 0.8);
+}
+
+.locale-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.locale-switch span {
+  font-size: 0.8rem;
+  color: rgba(220, 200, 166, 0.85);
+}
+
+.locale-switch select {
+  width: auto;
+  min-width: 108px;
+  padding: 0.32rem 0.55rem;
 }
 
 .brand-banner h1 {
@@ -476,6 +565,11 @@ select {
 
   .status {
     text-align: left;
+  }
+
+  .banner-top {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 </style>
