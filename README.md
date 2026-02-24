@@ -1,108 +1,109 @@
-[English](README-EN.md) | **中文**
+﻿[English](README-EN.md) | **简体中文**
 
-# 🎲 博饼游戏 (Mooncake Dice Game)
+# Mooncake Dice Game (Online Multiplayer)
 
-基于 Vite + Vue 3 + TypeScript 实现的中国传统博饼游戏，支持多人同设备轮流掷骰子，中国风喜庆视觉风格，含骰子动画和音效。
+该项目已从“同设备轮流”重构为“在线多人房间制”玩法：
+- 服务端权威掷骰与判奖（防止前端作弊）
+- 房间号邀请
+- 昵称 + 临时会话
+- 断线重连（同一 session token）
+- 运行态快照持久化（重启可恢复进行中的房间）
 
-## 🎮 游戏简介
+## 技术栈
 
-博饼是闽南地区中秋节的传统习俗，玩家通过掷骰子赢取不同等级的奖品。本游戏完整实现了传统博饼规则，包含抢状元机制和精美的视觉效果。
+- 前端：Vue 3 + Vite + TypeScript
+- 后端：Node.js + Express + WebSocket (`ws`)
+- 持久化：JSON 快照文件（`server/data/game.db`，文件格式为 JSON）
+- 部署：Docker Compose（`web` + `server`）
 
-## 📜 游戏规则
+## 本地开发
 
-6 颗骰子，判定优先级从高到低：
-
-| 排名 | 名称 | 条件 | 奖品数量 |
-|------|------|------|----------|
-| 状元(六杯红) | 六杯红 | 6个四 | 1（共享状元池） |
-| 状元(六杯黑) | 六杯黑 | 6个相同(非四) | 1 |
-| 状元(五红) | 五红 | 5个四 | 1 |
-| 状元(五子) | 五子 | 5个相同(非四) | 1 |
-| 状元(四红) | 四红 | 4个四 | 1 |
-| 榜眼 | 对堂 | 1-2-3-4-5-6各一 | 2 |
-| 探花 | 三红 | 恰好3个四 | 4 |
-| 进士 | 四进 | 4个相同(非四红) | 8 |
-| 举人 | 二举 | 恰好2个四 | 16 |
-| 秀才 | 一秀 | 恰好1个四 | 32 |
-
-**抢状元规则**：状元只有1份，后来者掷出更高级别可以抢走前任的状元。
-
-## 🚀 快速开始
-
-### 环境要求
-
-- Node.js 18+
-- pnpm (推荐) 或 npm
-
-### 安装依赖
+### 1) 安装依赖
 
 ```bash
 pnpm install
 ```
 
-### 启动开发服务器
+### 2) 启动后端
 
 ```bash
-pnpm dev
+pnpm dev:server
 ```
 
-### 构建生产版本
+默认监听：`http://localhost:3001`
+
+### 3) 启动前端
 
 ```bash
-pnpm build
+pnpm dev:web
 ```
 
-### 预览生产版本
+默认监听：`http://localhost:5173`
+
+Vite 已配置代理：
+- `/api` -> `http://localhost:3001`
+- `/ws` -> `ws://localhost:3001`
+
+### 4) 生产构建
 
 ```bash
-pnpm preview
+pnpm build:web
+pnpm build:server
 ```
 
-## 🏗️ 项目结构
+## Docker 部署
 
+```bash
+docker compose up -d --build
 ```
+
+服务：
+- `web`: 80 端口（Nginx 托管前端 + 反代 `/api` `/ws`）
+- `server`: 3001 端口（内部）
+
+持久化卷：
+- `mooncake_data` -> `/data`
+
+## 主要接口
+
+- `POST /api/session` 创建临时会话
+- `POST /api/rooms` 创建房间
+- `POST /api/rooms/:roomCode/join` 加入房间
+- `GET /api/rooms/:roomCode/state` 拉取房间快照
+- `GET /healthz` 健康检查
+
+WebSocket 路径：`/ws`
+
+客户端消息：
+- `room:start`
+- `turn:roll`
+- `turn:next`
+- `room:leave`
+
+服务端消息：
+- `room:snapshot`
+- `game:rolled`
+- `game:turn_changed`
+- `game:ended`
+- `error`
+
+## 目录结构
+
+```text
+shared/
+  game-types.ts          # 前后端共享类型
+server/
+  src/
+    index.ts             # HTTP + WS 入口
+    room-manager.ts      # 房间、回合、会话管理
+    game-engine.ts       # 骰子规则与判奖
+    db.ts                # 持久化存储
 src/
-├── App.vue                    # 根组件，游戏状态机
-├── main.ts                    # 应用入口
-├── style.css                  # 全局样式
-├── components/
-│   ├── SetupScreen.vue        # 设置界面：玩家人数、名字
-│   ├── GameScreen.vue         # 游戏主界面
-│   ├── Dice.vue               # 单个骰子（CSS 3D动画）
-│   └── ResultScreen.vue       # 结算界面：最终排名
-└── composables/
-    ├── useGameState.ts        # 游戏状态管理（玩家、轮次、奖品池）
-    ├── useDiceRoll.ts         # 骰子逻辑（随机、判定）
-    └── useAudio.ts            # Web Audio API 音效
+  App.vue                # 在线多人主界面
+  composables/
+    useOnlineGame.ts     # 前端实时连接与状态
 ```
 
-## ✨ 功能特性
+## License
 
-- 🎲 **完整博饼规则**：支持所有传统奖项判定
-- 👥 **多人游戏**：支持 2-10 位玩家同设备轮流游戏
-- 🏆 **抢状元机制**：高级别状元可抢夺低级别状元
-- 🎨 **中国风视觉**：红金配色，喜庆风格
-- 🎬 **骰子动画**：CSS 3D 翻滚动画效果
-- 🔊 **音效反馈**：Web Audio API 合成音效，无需外部文件
-- 📱 **响应式设计**：移动端优先，适配各种屏幕
-
-## 🛠️ 技术栈
-
-- **框架**：Vue 3 (Composition API + `<script setup>`)
-- **语言**：TypeScript
-- **构建工具**：Vite
-- **样式**：原生 CSS（中国风设计）
-- **音效**：Web Audio API
-
-## 🎯 游戏流程
-
-1. **设置界面**：输入 2-10 位玩家名字
-2. **游戏开始**：按顺序轮流掷骰子
-3. **每次掷骰**：动画 1.2s → 显示结果 → 自动分配奖品
-4. **抢状元**：后来者掷出更高级别状元，自动抢夺
-5. **结束条件**：所有轮次完成，或所有奖品已发完
-6. **结算**：显示每人获得的奖品和最终排名
-
-## 📄 许可证
-
-MIT License
+MIT

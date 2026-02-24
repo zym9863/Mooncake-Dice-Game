@@ -1,0 +1,34 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: mooncake-server
+    environment:
+      PORT: 3001
+      DATA_DIR: /data/game.db
+      NODE_ENV: production
+    volumes:
+      - mooncake_data:/data
+    expose:
+      - "3001"
+    restart: always
+    mem_limit: 512m
+    cpus: 1.0
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: mooncake-web
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    restart: always
+    mem_limit: 512m
+    cpus: 1.0
+
+volumes:
+  mooncake_data:
+
