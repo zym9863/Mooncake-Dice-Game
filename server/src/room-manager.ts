@@ -24,6 +24,11 @@ export interface RoomActionResult {
   championChanged: boolean
 }
 
+export interface LeaveRoomResult {
+  room: ManagedRoom | null
+  roomRemoved: boolean
+}
+
 export interface ManagedRoom {
   roomId: string
   roomCode: string
@@ -172,16 +177,40 @@ export class RoomManager {
     return room
   }
 
-  leaveRoom(roomCode: string, playerId: string): ManagedRoom {
+  leaveRoom(roomCode: string, playerId: string): LeaveRoomResult {
     const room = this.assertRoom(roomCode)
-    const player = room.state.players.find(item => item.playerId === playerId)
-    if (!player) {
+    const playerIndex = room.state.players.findIndex(item => item.playerId === playerId)
+    if (playerIndex < 0) {
       throw new Error('Player not in room')
     }
-    player.connected = false
+
+    if (room.state.phase !== 'waiting') {
+      room.state.players[playerIndex].connected = false
+      this.touchRoom(room)
+      this.persistRoom(room)
+      return {
+        room,
+        roomRemoved: false,
+      }
+    }
+
+    room.state.players.splice(playerIndex, 1)
+    if (room.state.players.length === 0) {
+      this.removeRoom(room)
+      return {
+        room: null,
+        roomRemoved: true,
+      }
+    }
+    if (room.state.hostPlayerId === playerId) {
+      room.state.hostPlayerId = room.state.players[0].playerId
+    }
     this.touchRoom(room)
     this.persistRoom(room)
-    return room
+    return {
+      room,
+      roomRemoved: false,
+    }
   }
 
   setConnection(roomCode: string, playerId: string, connected: boolean): ManagedRoom {
@@ -288,6 +317,12 @@ export class RoomManager {
       updatedAt: room.updatedAt,
     }
     this.store.saveRoom(record)
+  }
+
+  private removeRoom(room: ManagedRoom) {
+    this.roomsByCode.delete(room.roomCode)
+    this.roomCodeById.delete(room.roomId)
+    this.store.deleteRoom(room.roomId)
   }
 
   private generateRoomCode(): string {

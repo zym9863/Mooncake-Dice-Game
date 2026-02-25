@@ -202,8 +202,10 @@ function handleWsMessage(connection: ClientConnection, payloadText: string) {
         return
       }
       case 'room:leave': {
-        const room = roomManager.leaveRoom(connection.roomCode, connection.playerId)
-        broadcastSnapshot(room)
+        const outcome = roomManager.leaveRoom(connection.roomCode, connection.playerId)
+        if (outcome.room) {
+          broadcastSnapshot(outcome.room)
+        }
         return
       }
       default:

@@ -63,6 +63,15 @@ export class SqliteStore {
     this.flush()
   }
 
+  deleteRoom(roomId: string) {
+    const index = this.cache.rooms.findIndex(item => item.roomId === roomId)
+    if (index < 0) {
+      return
+    }
+    this.cache.rooms.splice(index, 1)
+    this.flush()
+  }
+
   loadActiveRooms(): RoomRecord[] {
     return this.cache.rooms.filter(room => room.status === 'waiting' || room.status === 'playing')
   }
