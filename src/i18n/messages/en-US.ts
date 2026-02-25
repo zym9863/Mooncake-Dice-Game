@@ -32,7 +32,6 @@ const enUS = {
   },
   room: {
     title: 'Room {roomCode}',
-    versionAndUser: 'Version #{version} | You are {name}',
     waitingTitle: 'Waiting Room',
     waitingDescription: '{count} players joined. Host can start when at least 2 players are ready.',
     startGame: 'Start Game',

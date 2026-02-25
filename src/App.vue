@@ -27,7 +27,6 @@ const { t, locale } = useI18n()
 const {
   session,
   roomState,
-  roomVersion,
   errorMessage,
   connectionStatus,
   joiningRoomCode,
@@ -253,7 +252,6 @@ onMounted(async () => {
       <article class="panel card-block room-head">
         <div>
           <h2>{{ t('room.title', { roomCode: roomState.roomCode }) }}</h2>
-          <p>{{ t('room.versionAndUser', { version: roomVersion, name: me?.name ?? session.nickname }) }}</p>
         </div>
         <div class="status">
           <span>{{ t(`status.phase.${roomState.phase}`) }}</span>

@@ -32,7 +32,6 @@ const zhCN = {
   },
   room: {
     title: '房间 {roomCode}',
-    versionAndUser: '版本 #{version} | 你是 {name}',
     waitingTitle: '等待房间',
     waitingDescription: '已有 {count} 位玩家加入。至少 2 位玩家后房主可开始。',
     startGame: '开始游戏',
