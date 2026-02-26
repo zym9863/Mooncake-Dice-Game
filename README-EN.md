@@ -64,6 +64,40 @@ Services:
 Persistent volume:
 - `mooncake_data` -> `/data`
 
+## GitHub Actions Auto Deploy (push-to-deploy)
+
+The repository now includes: `.github/workflows/deploy.yml`
+
+Triggers:
+- Push to `main`
+- Manual run (`workflow_dispatch`)
+
+### Server prerequisites
+
+1. Docker + Docker Compose installed
+2. Repository already cloned on server (example: `/opt/Mooncake-Dice-Game`)
+3. Deploy user can run `git` and `docker compose`
+
+### Required GitHub Secrets
+
+In `Settings -> Secrets and variables -> Actions`, add:
+
+- `DEPLOY_HOST`: server IP/domain
+- `DEPLOY_PORT`: SSH port (optional, default 22)
+- `DEPLOY_USER`: SSH username
+- `DEPLOY_SSH_KEY`: private key content (use a dedicated deploy key)
+- `DEPLOY_PATH`: project path on server (e.g. `/opt/Mooncake-Dice-Game`)
+
+### Commands executed by workflow
+
+```bash
+cd $DEPLOY_PATH
+git fetch --all
+git checkout main
+git pull origin main
+docker compose up -d --build --remove-orphans
+```
+
 ## HTTP APIs
 
 - `POST /api/session` create temporary session

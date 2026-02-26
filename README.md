@@ -64,6 +64,42 @@ docker compose up -d --build
 持久化卷：
 - `mooncake_data` -> `/data`
 
+## GitHub Actions 自动部署（推送即发布）
+
+仓库已提供工作流：`.github/workflows/deploy.yml`
+
+触发方式：
+- push 到 `main`
+- 手动触发（`workflow_dispatch`）
+
+### 服务器前置条件
+
+1. 服务器已安装 Docker + Docker Compose
+2. 服务器上已克隆本仓库（例如：`/opt/Mooncake-Dice-Game`）
+3. 部署用户有权限执行：`git`、`docker compose`
+
+### GitHub Secrets 配置
+
+在仓库 `Settings -> Secrets and variables -> Actions` 添加：
+
+- `DEPLOY_HOST`：服务器 IP 或域名
+- `DEPLOY_PORT`：SSH 端口（可选，默认 22）
+- `DEPLOY_USER`：SSH 用户名
+- `DEPLOY_SSH_KEY`：私钥内容（建议专用 deploy key）
+- `DEPLOY_PATH`：服务器上的项目路径（如 `/opt/Mooncake-Dice-Game`）
+
+### 工作流执行命令
+
+工作流会在服务器执行：
+
+```bash
+cd $DEPLOY_PATH
+git fetch --all
+git checkout main
+git pull origin main
+docker compose up -d --build --remove-orphans
+```
+
 ## 主要接口
 
 - `POST /api/session` 创建临时会话
