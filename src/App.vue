@@ -30,7 +30,6 @@ const {
   errorMessage,
   connectionStatus,
   joiningRoomCode,
-  me,
   currentPlayer,
   isHost,
   isCurrentTurn,
