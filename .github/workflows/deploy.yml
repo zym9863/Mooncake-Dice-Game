@@ -22,9 +22,25 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT }}
           script: |
-            set -e
+            set -euo pipefail
             cd ${{ secrets.DEPLOY_PATH }}
-            git fetch --all
+
+            git config --global http.version HTTP/1.1
+
+            for i in 1 2 3; do
+              if git fetch origin --prune; then
+                break
+              fi
+
+              if [ "$i" -eq 3 ]; then
+                echo "git fetch origin failed after 3 attempts"
+                exit 1
+              fi
+
+              echo "git fetch failed, retrying in $((i * 5))s..."
+              sleep $((i * 5))
+            done
+
             git checkout main
-            git pull origin main
+            git pull --ff-only origin main
             docker compose up -d --build --remove-orphans
