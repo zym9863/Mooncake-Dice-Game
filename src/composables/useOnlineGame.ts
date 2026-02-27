@@ -371,6 +371,7 @@ function mapServerMessageToErrorKey(message: string | undefined): string | null 
   if (normalized.includes('only host can start the room')) return 'error.onlyHostCanStart'
   if (normalized.includes('it is not your turn')) return 'error.notYourTurn'
   if (normalized.includes('at least 2 players are required')) return 'error.minPlayersRequired'
+  if (normalized.includes('nickname already taken')) return 'error.nicknameTaken'
   if (normalized.includes('game already started')) return 'error.gameAlreadyStarted'
   if (normalized.includes('room is already started')) return 'error.roomAlreadyStarted'
   if (normalized.includes('current turn already rolled')) return 'error.turnAlreadyRolled'

@@ -104,6 +104,7 @@ const zhCN = {
     notYourTurn: '当前不是你的回合。',
     minPlayersRequired: '至少需要 2 位玩家才能开始。',
     gameAlreadyStarted: '游戏已开始，无法再加入新玩家。',
+    nicknameTaken: '该昵称在房间中已被使用。',
     roomAlreadyStarted: '房间已开始。',
     turnAlreadyRolled: '当前回合已掷骰。',
     rollBeforeNext: '请先掷骰，再进入下一回合。',

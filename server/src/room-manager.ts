@@ -162,8 +162,18 @@ export class RoomManager {
     }
 
     if (existing) {
+      const nicknameExists = room.state.players.some(
+        player => player.name === session.nickname && player.playerId !== session.playerId,
+      )
+      if (nicknameExists) {
+        throw new Error('Nickname already taken in this room.')
+      }
       existing.name = session.nickname
     } else {
+      const nicknameExists = room.state.players.some(player => player.name === session.nickname)
+      if (nicknameExists) {
+        throw new Error('Nickname already taken in this room.')
+      }
       room.state.players.push({
         playerId: session.playerId,
         name: session.nickname,

@@ -104,6 +104,7 @@ const enUS = {
     notYourTurn: 'It is not your turn.',
     minPlayersRequired: 'At least 2 players are required.',
     gameAlreadyStarted: 'Game already started. New players cannot join.',
+    nicknameTaken: 'Nickname already taken in this room.',
     roomAlreadyStarted: 'Room is already started.',
     turnAlreadyRolled: 'Current turn already rolled.',
     rollBeforeNext: 'You must roll before moving to the next turn.',
