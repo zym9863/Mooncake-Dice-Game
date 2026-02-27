@@ -34,7 +34,6 @@ const {
   isHost,
   isCurrentTurn,
   canRoll,
-  canNext,
   createSession,
   createRoom,
   joinRoom,
@@ -98,11 +97,10 @@ async function handleStartRoom() {
 }
 
 async function handleRoll() {
-  await submit(async () => rollTurn())
-}
-
-async function handleNext() {
-  await submit(async () => nextTurn())
+  await submit(async () => {
+    await rollTurn()
+    await nextTurn()
+  })
 }
 
 function handleLeaveRoom() {
@@ -299,9 +297,6 @@ onMounted(async () => {
           <div v-if="roomState.phase === 'playing'" class="actions">
             <button class="btn-primary" :disabled="!canRoll || isSubmitting" @click="handleRoll">
               {{ isCurrentTurn ? t('room.rollDice') : t('room.waitingTurn') }}
-            </button>
-            <button class="btn-gold" :disabled="!canNext || isSubmitting" @click="handleNext">
-              {{ t('room.nextTurn') }}
             </button>
           </div>
         </article>

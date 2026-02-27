@@ -180,9 +180,6 @@ function handleChampion(state: GameRoomState, result: DiceResult) {
 }
 
 export function nextTurn(state: GameRoomState) {
-  state.lastResult = null
-  state.lastPrizeAwarded = null
-  state.championStolen = false
   state.hasRolledThisTurn = false
 
   if (isGameOver(state)) {

@@ -196,10 +196,6 @@ export function useGameState() {
   }
 
   function nextTurn() {
-    state.lastResult = null
-    state.lastPrizeAwarded = null
-    state.championStolen = false
-
     if (isGameOver.value) {
       state.phase = 'result'
       return
