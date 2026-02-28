@@ -98,6 +98,37 @@ git pull origin main
 docker compose up -d --build --remove-orphans
 ```
 
+## GitHub Actions Docker Image Publish (GHCR + Docker Hub)
+
+The repository includes: `.github/workflows/docker-publish.yml`
+
+Triggers:
+- Push to `main`
+- Push tags matching `v*` (e.g. `v1.0.0`)
+- Manual run (`workflow_dispatch`)
+
+This workflow builds and pushes two images:
+- `mooncake-dice-game-web` (from `Dockerfile.web`)
+- `mooncake-dice-game-server` (from `server/Dockerfile`)
+
+Image repository examples:
+- GHCR: `ghcr.io/<github_owner>/mooncake-dice-game-web`
+- GHCR: `ghcr.io/<github_owner>/mooncake-dice-game-server`
+- Docker Hub: `docker.io/<dockerhub_username>/mooncake-dice-game-web`
+- Docker Hub: `docker.io/<dockerhub_username>/mooncake-dice-game-server`
+
+### Required GitHub Secrets (image publish)
+
+In `Settings -> Secrets and variables -> Actions`, add:
+
+- `DOCKERHUB_USERNAME`: Docker Hub username
+- `DOCKERHUB_TOKEN`: Docker Hub access token
+
+Notes:
+- GHCR login uses `GITHUB_TOKEN` (no extra GHCR token required)
+- Package write permission is required (`permissions.packages: write` is declared in workflow)
+- `latest` tag is only generated for default branch pushes
+
 ## HTTP APIs
 
 - `POST /api/session` create temporary session

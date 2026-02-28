@@ -100,6 +100,37 @@ git pull origin main
 docker compose up -d --build --remove-orphans
 ```
 
+## GitHub Actions 自动推送 Docker 镜像（GHCR + Docker Hub）
+
+仓库已提供工作流：`.github/workflows/docker-publish.yml`
+
+触发方式：
+- push 到 `main`
+- push `v*` 标签（例如 `v1.0.0`）
+- 手动触发（`workflow_dispatch`）
+
+会构建并推送两个镜像：
+- `mooncake-dice-game-web`（基于 `Dockerfile.web`）
+- `mooncake-dice-game-server`（基于 `server/Dockerfile`）
+
+镜像仓库示例：
+- GHCR：`ghcr.io/<github_owner>/mooncake-dice-game-web`
+- GHCR：`ghcr.io/<github_owner>/mooncake-dice-game-server`
+- Docker Hub：`docker.io/<dockerhub_username>/mooncake-dice-game-web`
+- Docker Hub：`docker.io/<dockerhub_username>/mooncake-dice-game-server`
+
+### GitHub Secrets 配置（镜像推送）
+
+在仓库 `Settings -> Secrets and variables -> Actions` 添加：
+
+- `DOCKERHUB_USERNAME`：Docker Hub 用户名
+- `DOCKERHUB_TOKEN`：Docker Hub Access Token
+
+说明：
+- 工作流会使用 `GITHUB_TOKEN` 登录 GHCR（无需额外 GHCR Token）
+- 仓库需允许工作流写入 Packages（`permissions.packages: write` 已在工作流内声明）
+- `latest` 仅在默认分支推送时生成
+
 ## 主要接口
 
 - `POST /api/session` 创建临时会话
