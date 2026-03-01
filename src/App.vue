@@ -127,10 +127,6 @@ function rankLabel(rank: RankType | null | undefined, fallbackName = '') {
   return translated
 }
 
-function playerConnectionLabel(connected: boolean) {
-  return connected ? t('status.player.online') : t('status.player.offline')
-}
-
 function translateError(message: string) {
   if (!message) {
     return ''
