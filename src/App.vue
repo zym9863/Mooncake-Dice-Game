@@ -450,7 +450,7 @@ input:focus + .input-ring, select:focus + .input-ring { opacity: 1; }
 .lobby-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
 .room-grid { display: flex; flex-direction: column; gap: 1.5rem; }
 .room-head { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 2rem; }
-.room-title-area h2 { font-size: 1.8rem; color: var(--primary-gold-bright); }
+.room-title-area h2 { font-size: 1.8rem; color: var(--primary-gold-bright); font-family: 'Cinzel', 'Noto Serif SC', serif; letter-spacing: 0.1em; }
 .status { text-align: right; display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-end; }
 .phase-badge {
   background: rgba(232, 185, 90, 0.15); border: 1px solid var(--primary-gold-dim);
