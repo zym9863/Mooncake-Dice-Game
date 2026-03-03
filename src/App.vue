@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import Dice from './components/Dice.vue'
 import {
   type GameEndMode,
   PRIZE_ORDER,
@@ -317,10 +318,8 @@ onMounted(async () => {
 
               <div class="dice-stage">
                 <div class="dice-row">
-                  <div v-for="(value, idx) in roomState.lastResult?.dice ?? [1, 1, 1, 1, 1, 1]" :key="idx" 
-                       :class="['die', 'die-' + value]">
-                    <span class="die-value">{{ value }}</span>
-                  </div>
+                  <Dice v-for="(value, idx) in roomState.lastResult?.dice ?? [1, 1, 1, 1, 1, 1]" :key="idx" 
+                        :value="value" :rolling="isSubmitting" />
                 </div>
               </div>
 

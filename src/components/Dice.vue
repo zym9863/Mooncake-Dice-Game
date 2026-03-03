@@ -6,20 +6,20 @@ const props = defineProps<{
   rolling?: boolean
 }>()
 
-const isRed = computed(() => props.value === 4)
+const isFour = computed(() => props.value === 4)
 
 const dotPositions: Record<number, [number, number][]> = {
   1: [[25, 25]],
-  2: [[12, 12], [38, 38]],
-  3: [[12, 12], [25, 25], [38, 38]],
-  4: [[12, 12], [38, 12], [12, 38], [38, 38]],
-  5: [[12, 12], [38, 12], [25, 25], [12, 38], [38, 38]],
-  6: [[12, 12], [38, 12], [12, 25], [38, 25], [12, 38], [38, 38]],
+  2: [[14, 14], [36, 36]],
+  3: [[13, 13], [25, 25], [37, 37]],
+  4: [[14, 14], [36, 14], [14, 36], [36, 36]],
+  5: [[13, 13], [37, 13], [25, 25], [13, 37], [37, 37]],
+  6: [[14, 11], [36, 11], [14, 25], [36, 25], [14, 39], [36, 39]],
 }
 </script>
 
 <template>
-  <div class="dice" :class="{ rolling, 'dice-red': isRed }">
+  <div class="dice" :class="{ rolling, 'dice-red': isFour }">
     <div class="dice-shell">
       <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
         <rect
@@ -27,19 +27,19 @@ const dotPositions: Record<number, [number, number][]> = {
           y="0"
           width="50"
           height="50"
-          rx="8"
-          ry="8"
+          rx="10"
+          ry="10"
           fill="#FFF7EE"
           stroke="#D39C63"
-          stroke-width="1.3"
+          stroke-width="1"
         />
         <circle
           v-for="(pos, index) in dotPositions[value] || []"
           :key="index"
           :cx="pos[0]"
           :cy="pos[1]"
-          r="4.4"
-          :class="isRed ? 'dot-red' : 'dot-black'"
+          :r="value === 1 ? 8.5 : 4.4"
+          :class="(value === 1 || value === 4) ? 'dot-red' : 'dot-black'"
         />
       </svg>
     </div>
@@ -101,5 +101,13 @@ const dotPositions: Record<number, [number, number][]> = {
 svg {
   width: 100%;
   height: 100%;
+}
+
+.dot-red {
+  fill: #D73C3E;
+}
+
+.dot-black {
+  fill: #161B33;
 }
 </style>
