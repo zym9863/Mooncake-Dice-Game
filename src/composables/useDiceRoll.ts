@@ -121,7 +121,7 @@ export function rollDice(): number[] {
 }
 
 export function useDiceRoll() {
-  const currentDice = ref<number[]>([1, 1, 1, 1, 1, 1])
+  const currentDice = ref<number[]>([1, 2, 3, 4, 5, 6])
   const currentResult = ref<DiceResult | null>(null)
   const isRolling = ref(false)
 

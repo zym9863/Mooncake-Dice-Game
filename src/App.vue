@@ -318,7 +318,7 @@ onMounted(async () => {
 
               <div class="dice-stage">
                 <div class="dice-row">
-                  <Dice v-for="(value, idx) in roomState.lastResult?.dice ?? [1, 1, 1, 1, 1, 1]" :key="idx" 
+                  <Dice v-for="(value, idx) in roomState.lastResult?.dice ?? [1, 2, 3, 4, 5, 6]" :key="idx" 
                         :value="value" :rolling="isSubmitting" />
                 </div>
               </div>
