@@ -2,12 +2,14 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Dice from './components/Dice.vue'
+import { getPrizeColor, getPrizeSurface } from './constants/prizeMeta'
 import {
   type GameEndMode,
   PRIZE_ORDER,
   RANK_SCORE,
   type RankType,
   type PrizeTier,
+  type PlayerState,
 } from '../shared/game-types'
 import { type Locale, setLocale, SUPPORTED_LOCALES } from './i18n'
 import {
@@ -110,6 +112,40 @@ function handleLeaveRoom() {
 
 function handleResetSession() {
   resetSession()
+}
+
+function summarizePlayerPrizes(player: PlayerState) {
+  const summary: { key: PrizeTier; desc: string; count: number }[] = []
+  for (const tier of PRIZE_ORDER) {
+    const tierPrizes = player.prizes.filter(p => p.rankTitle === tier)
+    if (tierPrizes.length === 0) continue
+
+    if (tier === 'zhuangyuan') {
+      const zPrizes: Record<string, number> = {}
+      for (const p of tierPrizes) {
+        const desc = `${prizeLabel(tier)}(${rankLabel(p.rank, p.rankName)})`
+        if (!zPrizes[desc]) zPrizes[desc] = 0
+        zPrizes[desc]++
+      }
+      for (const [desc, count] of Object.entries(zPrizes)) {
+        summary.push({ key: tier, desc, count })
+      }
+    } else {
+      summary.push({
+        key: tier,
+        desc: prizeLabel(tier),
+        count: tierPrizes.length,
+      })
+    }
+  }
+  return summary
+}
+
+function getPrizeStyle(tier: PrizeTier) {
+  return {
+    '--tone': getPrizeColor(tier),
+    '--surface': getPrizeSurface(tier),
+  }
 }
 
 function prizeLabel(tier: PrizeTier) {
@@ -380,11 +416,18 @@ onMounted(async () => {
               <ul class="side-player-list">
                 <li v-for="(player, index) in roomState.players" :key="player.playerId"
                     :class="{ active: roomState.currentPlayerIndex === index }">
-                  <div class="sp-info">
-                    <span class="status-dot small" :class="{ online: player.connected }"></span>
-                    <strong>{{ player.name }}</strong>
+                  <div class="sp-row">
+                    <div class="sp-info">
+                      <span class="status-dot small" :class="{ online: player.connected }"></span>
+                      <strong>{{ player.name }}</strong>
+                    </div>
+                    <span class="sp-prizes">{{ t('room.playerPrizeCount', { count: player.prizes.length }) }}</span>
                   </div>
-                  <span class="sp-prizes">{{ t('room.playerPrizeCount', { count: player.prizes.length }) }}</span>
+                  <div class="sp-prize-tags" v-if="player.prizes.length > 0">
+                    <span v-for="prize in summarizePlayerPrizes(player)" :key="prize.desc" class="sp-prize-chip" :style="getPrizeStyle(prize.key)">
+                      {{ prize.desc }}<template v-if="prize.count > 1"> × {{ prize.count }}</template>
+                    </span>
+                  </div>
                 </li>
               </ul>
             </article>
@@ -507,11 +550,14 @@ input:focus + .input-ring, select:focus + .input-ring { opacity: 1; }
 .prize-list li.empty { opacity: 0.3; }
 .prize-name { color: #ddd; font-size: 1rem; }
 .prize-count { color: var(--primary-gold); font-family: monospace; font-size: 1.2rem; }
-.side-player-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: rgba(0,0,0,0.2); border-radius: 6px; border: 1px solid transparent; transition: all 0.3s; }
+.side-player-list li { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.8rem; background: rgba(0,0,0,0.2); border-radius: 6px; border: 1px solid transparent; transition: all 0.3s; }
 .side-player-list li.active { background: rgba(232, 185, 90, 0.1); border-color: var(--primary-gold-dim); box-shadow: inset 0 0 15px rgba(232, 185, 90, 0.1); transform: translateX(5px); }
+.sp-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
 .sp-info { display: flex; align-items: center; gap: 0.8rem; }
 .sp-info strong { font-size: 1.05rem; }
 .sp-prizes { font-size: 0.85rem; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 0.2rem 0.6rem; border-radius: 20px; }
+.sp-prize-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; padding-left: 1.3rem; }
+.sp-prize-chip { padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent); color: var(--tone); background: color-mix(in srgb, var(--surface) 60%, rgba(0,0,0,0.4)); font-weight: 500; }
 .ranking-list { list-style: none; display: flex; flex-direction: column; gap: 1rem; counter-reset: rank; }
 .ranking-list li { display: flex; align-items: center; background: rgba(0,0,0,0.3); padding: 1.2rem; border-radius: 8px; border: 1px solid var(--border-panel); position: relative; overflow: hidden; transition: transform 0.3s; }
 .ranking-list li:hover { transform: translateY(-2px); }
