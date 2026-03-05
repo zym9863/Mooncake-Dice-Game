@@ -180,11 +180,10 @@ export const PRIZE_LABELS: Record<PrizeTier, string> = {
 }
 
 export const RANK_SCORE: Record<PrizeTier, number> = {
-  zhuangyuan: 1000,
-  bangyan: 500,
-  tanhua: 200,
-  jinshi: 100,
-  juren: 50,
-  xiucai: 10,
+  zhuangyuan: 100,
+  bangyan: 50,
+  tanhua: 20,
+  jinshi: 10,
+  juren: 5,
+  xiucai: 2,
 }
-
