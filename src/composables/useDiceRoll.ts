@@ -130,25 +130,18 @@ export function useDiceRoll() {
       isRolling.value = true
       currentResult.value = null
 
-      // 动画阶段：快速随机切换骰子面
-      const animDuration = 1200
-      const interval = 80
-      let elapsed = 0
+      // 动画阶段：CSS 3D翻滚进行中，移除高频数字刷新以确保纯净的3D旋转
+      const animDuration = 1500 // 等待CSS 3D动画的时间，可调得长一点
 
-      const timer = setInterval(() => {
-        currentDice.value = rollDice()
-        elapsed += interval
-        if (elapsed >= animDuration) {
-          clearInterval(timer)
-          // 最终结果
-          const finalDice = rollDice()
-          currentDice.value = finalDice
-          const result = judgeDice(finalDice)
-          currentResult.value = result
-          isRolling.value = false
-          resolve(result)
-        }
-      }, interval)
+      setTimeout(() => {
+        // 最终结果
+        const finalDice = rollDice()
+        currentDice.value = finalDice
+        const result = judgeDice(finalDice)
+        currentResult.value = result
+        isRolling.value = false
+        resolve(result)
+      }, animDuration)
     })
   }
 
