@@ -208,6 +208,11 @@ function handleWsMessage(connection: ClientConnection, payloadText: string) {
         }
         return
       }
+      case 'game:restart': {
+        const room = roomManager.restartGame(connection.roomCode, connection.playerId)
+        broadcastSnapshot(room)
+        return
+      }
       default:
         throw new Error('Unsupported message type')
     }

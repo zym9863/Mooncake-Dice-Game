@@ -307,6 +307,34 @@ export class RoomManager {
     return room
   }
 
+  restartGame(roomCode: string, playerId: string): ManagedRoom {
+    const room = this.assertRoom(roomCode)
+    const player = room.state.players.find(item => item.playerId === playerId)
+    if (!player) {
+      throw new Error('Player not in room')
+    }
+    if (room.state.phase !== 'result') {
+      throw new Error('Can only restart game from result phase')
+    }
+
+    room.state.phase = 'waiting'
+    room.state.currentPlayerIndex = 0
+    room.state.currentRound = 1
+    room.state.prizePool = { ...PRIZE_POOL_DEFAULT }
+    room.state.champion = null
+    room.state.lastResult = null
+    room.state.lastPrizeAwarded = null
+    room.state.championStolen = false
+    room.state.hasRolledThisTurn = false
+    for (const item of room.state.players) {
+      item.prizes = []
+    }
+
+    this.touchRoom(room)
+    this.persistRoom(room)
+    return room
+  }
+
   private assertRoom(roomCode: string): ManagedRoom {
     const room = this.roomsByCode.get(roomCode.toUpperCase())
     if (!room) {

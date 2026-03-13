@@ -202,6 +202,10 @@ export function useOnlineGame() {
     send({ type: 'turn:next', payload: { roomCode: requireRoomCode() } })
   }
 
+  function restartGame() {
+    send({ type: 'game:restart', payload: { roomCode: requireRoomCode() } })
+  }
+
   function leaveRoom() {
     if (roomState.value) {
       try {
@@ -319,6 +323,7 @@ export function useOnlineGame() {
     startRoom,
     rollTurn,
     nextTurn,
+    restartGame,
     leaveRoom,
     resetSession,
   }
@@ -376,6 +381,7 @@ function mapServerMessageToErrorKey(message: string | undefined): string | null 
   if (normalized.includes('room is already started')) return 'error.roomAlreadyStarted'
   if (normalized.includes('current turn already rolled')) return 'error.turnAlreadyRolled'
   if (normalized.includes('you must roll before moving to the next turn')) return 'error.rollBeforeNext'
+  if (normalized.includes('can only restart game from result phase')) return 'error.restartOnlyFromResult'
   if (normalized.includes('unknown server error')) return 'error.serverUnknown'
   return null
 }

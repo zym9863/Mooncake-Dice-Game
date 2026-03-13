@@ -146,11 +146,19 @@ export interface LeaveRoomMessage {
   }
 }
 
+export interface RestartGameMessage {
+  type: 'game:restart'
+  payload: {
+    roomCode: string
+  }
+}
+
 export type ClientToServerMessage =
   | StartRoomMessage
   | RollTurnMessage
   | NextTurnMessage
   | LeaveRoomMessage
+  | RestartGameMessage
 
 export const PRIZE_POOL_DEFAULT: Record<PrizeTier, number> = {
   zhuangyuan: 1,

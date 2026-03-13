@@ -49,6 +49,7 @@ const zhCN = {
     playersTitle: '玩家',
     playerPrizeCount: '{count} 个奖品',
     finalRankingTitle: '最终排名',
+    backToWaiting: '返回房间',
     backToLobby: '返回大厅',
   },
   status: {
@@ -108,6 +109,7 @@ const zhCN = {
     roomAlreadyStarted: '房间已开始。',
     turnAlreadyRolled: '当前回合已掷骰。',
     rollBeforeNext: '请先掷骰，再进入下一回合。',
+    restartOnlyFromResult: '仅可在结算后返回等待。',
     serverUnknown: '服务器返回未知错误。',
     requestFailed: '请求失败。',
   },

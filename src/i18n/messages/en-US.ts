@@ -49,6 +49,7 @@ const enUS = {
     playersTitle: 'Players',
     playerPrizeCount: '{count} prizes',
     finalRankingTitle: 'Final Ranking',
+    backToWaiting: 'Back to Room',
     backToLobby: 'Back to Lobby',
   },
   status: {
@@ -108,6 +109,7 @@ const enUS = {
     roomAlreadyStarted: 'Room is already started.',
     turnAlreadyRolled: 'Current turn already rolled.',
     rollBeforeNext: 'You must roll before moving to the next turn.',
+    restartOnlyFromResult: 'You can only restart from the result phase.',
     serverUnknown: 'Unknown server error.',
     requestFailed: 'Request failed.',
   },

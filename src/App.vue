@@ -44,6 +44,7 @@ const {
   startRoom,
   rollTurn,
   nextTurn,
+  restartGame,
   leaveRoom,
   resetSession,
 } = useOnlineGame()
@@ -108,6 +109,10 @@ async function handleRoll() {
 
 function handleLeaveRoom() {
   leaveRoom()
+}
+
+async function handleBackToWaitingRoom() {
+  await submit(async () => restartGame())
 }
 
 function handleResetSession() {
@@ -388,6 +393,9 @@ onMounted(async () => {
                 </li>
               </ol>
               <div class="actions center mt-4">
+                <button class="btn-primary" :disabled="isSubmitting" @click="handleBackToWaitingRoom">
+                  {{ t('room.backToWaiting') }}
+                </button>
                 <button class="btn-secondary" :disabled="isSubmitting" @click="handleLeaveRoom">
                   {{ t('room.backToLobby') }}
                 </button>
