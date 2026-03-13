@@ -33,6 +33,7 @@ const {
   errorMessage,
   connectionStatus,
   joiningRoomCode,
+  me,
   currentPlayer,
   isHost,
   isCurrentTurn,
@@ -73,6 +74,16 @@ const totalPrizesLeft = computed(() => {
 
 const connectionStatusLabel = computed(() => t(`status.connection.${connectionStatus.value}`))
 const localizedErrorMessage = computed(() => translateError(errorMessage.value))
+const isMeReturnedToWaiting = computed(() => Boolean(me.value?.returnedToWaiting))
+const isLocalWaitingInResult = computed(
+  () => Boolean(roomState.value && roomState.value.phase === 'result' && isMeReturnedToWaiting.value),
+)
+const showWaitingPanel = computed(
+  () => Boolean(roomState.value && (roomState.value.phase === 'waiting' || isLocalWaitingInResult.value)),
+)
+const showResultPanel = computed(
+  () => Boolean(roomState.value && roomState.value.phase === 'result' && !isMeReturnedToWaiting.value),
+)
 
 async function handleCreateSession() {
   if (!nickname.value.trim()) return
@@ -320,12 +331,18 @@ onMounted(async () => {
       </article>
 
       <!-- WAITING PHASE -->
-      <article v-if="roomState.phase === 'waiting'" class="panel card-block">
+      <article v-if="showWaitingPanel" class="panel card-block">
         <div class="card-header">
           <h3>{{ t('room.waitingTitle') }}</h3>
           <div class="header-line"></div>
         </div>
-        <p class="card-desc">{{ t('room.waitingDescription', { count: roomState.players.length }) }}</p>
+        <p class="card-desc">
+          {{
+            isLocalWaitingInResult
+              ? t('room.waitingForOthersAfterResult')
+              : t('room.waitingDescription', { count: roomState.players.length })
+          }}
+        </p>
         <ul class="player-list">
           <li v-for="player in roomState.players" :key="player.playerId" class="player-item">
             <span class="player-name">{{ player.name }}</span>
@@ -333,7 +350,12 @@ onMounted(async () => {
           </li>
         </ul>
         <div class="actions mt-4">
-          <button class="btn-primary" :disabled="!isHost || isSubmitting" @click="handleStartRoom">
+          <button
+            v-if="!isLocalWaitingInResult"
+            class="btn-primary"
+            :disabled="!isHost || isSubmitting"
+            @click="handleStartRoom"
+          >
             {{ t('room.startGame') }}
           </button>
           <button class="btn-secondary" :disabled="isSubmitting" @click="handleLeaveRoom">
@@ -380,7 +402,7 @@ onMounted(async () => {
             </article>
 
             <!-- FINAL RANKING -->
-            <article v-if="roomState.phase === 'result'" class="panel card-block mt-4">
+            <article v-if="showResultPanel" class="panel card-block mt-4">
               <div class="card-header">
                 <h3>{{ t('room.finalRankingTitle') }}</h3>
                 <div class="header-line"></div>

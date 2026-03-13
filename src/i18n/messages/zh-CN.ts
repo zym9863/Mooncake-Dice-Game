@@ -34,6 +34,7 @@ const zhCN = {
     title: '房间 {roomCode}',
     waitingTitle: '等待房间',
     waitingDescription: '已有 {count} 位玩家加入。至少 2 位玩家后房主可开始。',
+    waitingForOthersAfterResult: '你已返回房间，正在等待其他玩家返回。',
     startGame: '开始游戏',
     leaveRoom: '离开房间',
     turnTitle: '当前回合',

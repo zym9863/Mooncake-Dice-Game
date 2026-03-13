@@ -34,6 +34,7 @@ const enUS = {
     title: 'Room {roomCode}',
     waitingTitle: 'Waiting Room',
     waitingDescription: '{count} players joined. Host can start when at least 2 players are ready.',
+    waitingForOthersAfterResult: 'You have returned to the room. Waiting for other players to return.',
     startGame: 'Start Game',
     leaveRoom: 'Leave Room',
     turnTitle: 'Turn',

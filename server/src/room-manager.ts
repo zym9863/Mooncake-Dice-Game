@@ -53,6 +53,11 @@ export class RoomManager {
         updatedAt: room.updatedAt,
         state: room.state,
       }
+      for (const player of managed.state.players) {
+        if (typeof player.returnedToWaiting !== 'boolean') {
+          player.returnedToWaiting = false
+        }
+      }
       this.roomsByCode.set(room.roomCode, managed)
       this.roomCodeById.set(room.roomId, room.roomCode)
     }
@@ -127,6 +132,7 @@ export class RoomManager {
             name: owner.nickname,
             prizes: [],
             connected: false,
+            returnedToWaiting: false,
           },
         ],
         currentPlayerIndex: 0,
@@ -169,6 +175,9 @@ export class RoomManager {
         throw new Error('Nickname already taken in this room.')
       }
       existing.name = session.nickname
+      if (typeof existing.returnedToWaiting !== 'boolean') {
+        existing.returnedToWaiting = false
+      }
     } else {
       const nicknameExists = room.state.players.some(player => player.name === session.nickname)
       if (nicknameExists) {
@@ -179,6 +188,7 @@ export class RoomManager {
         name: session.nickname,
         prizes: [],
         connected: false,
+        returnedToWaiting: false,
       })
     }
 
@@ -268,6 +278,7 @@ export class RoomManager {
     room.state.updatedAt = now
     for (const player of room.state.players) {
       player.prizes = []
+      player.returnedToWaiting = false
     }
     this.touchRoom(room)
     this.persistRoom(room)
@@ -317,6 +328,15 @@ export class RoomManager {
       throw new Error('Can only restart game from result phase')
     }
 
+    player.returnedToWaiting = true
+
+    const allPlayersReturned = room.state.players.every(item => item.returnedToWaiting)
+    if (!allPlayersReturned) {
+      this.touchRoom(room)
+      this.persistRoom(room)
+      return room
+    }
+
     room.state.phase = 'waiting'
     room.state.currentPlayerIndex = 0
     room.state.currentRound = 1
@@ -328,6 +348,7 @@ export class RoomManager {
     room.state.hasRolledThisTurn = false
     for (const item of room.state.players) {
       item.prizes = []
+      item.returnedToWaiting = false
     }
 
     this.touchRoom(room)

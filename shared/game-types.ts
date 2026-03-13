@@ -42,6 +42,7 @@ export interface PlayerState {
   name: string
   prizes: PrizeRecord[]
   connected: boolean
+  returnedToWaiting: boolean
 }
 
 export interface ChampionState {
