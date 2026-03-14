@@ -206,6 +206,9 @@ export class RoomManager {
 
     if (room.state.phase !== 'waiting') {
       room.state.players[playerIndex].connected = false
+      if (room.state.phase === 'result') {
+        room.state.players[playerIndex].returnedToWaiting = true
+      }
       if (room.state.phase === 'result' && room.state.players.every(player => !player.connected)) {
         this.removeRoom(room)
         return {
