@@ -26,13 +26,15 @@ interface PersistedData {
   rooms: RoomRecord[]
 }
 
-const EMPTY_STORE: PersistedData = {
-  sessions: [],
-  rooms: [],
+function createEmptyStore(): PersistedData {
+  return {
+    sessions: [],
+    rooms: [],
+  }
 }
 
 export class SqliteStore {
-  private cache: PersistedData = EMPTY_STORE
+  private cache: PersistedData = createEmptyStore()
 
   constructor(private readonly dbPath: string) {
     mkdirSync(dirname(dbPath), { recursive: true })
@@ -81,11 +83,11 @@ export class SqliteStore {
       const text = readFileSync(this.dbPath, 'utf8')
       const parsed = JSON.parse(text) as PersistedData
       if (!parsed || !Array.isArray(parsed.sessions) || !Array.isArray(parsed.rooms)) {
-        return { ...EMPTY_STORE }
+        return createEmptyStore()
       }
       return parsed
     } catch {
-      return { ...EMPTY_STORE }
+      return createEmptyStore()
     }
   }
 

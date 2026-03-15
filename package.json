@@ -8,6 +8,9 @@
     "dev:web": "vite",
     "dev:server": "tsx watch server/src/index.ts",
     "dev:full": "concurrently \"pnpm dev:server\" \"pnpm dev:web\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "build:web": "vue-tsc -b && vite build",
     "build:server": "tsc -p server/tsconfig.json",
     "build": "pnpm build:web && pnpm build:server",
@@ -27,11 +30,13 @@
     "@types/node": "^24.10.1",
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-vue": "^6.0.2",
+    "@vitest/coverage-v8": "^4.1.0",
     "@vue/tsconfig": "^0.8.1",
     "concurrently": "^9.2.1",
     "tsx": "^4.20.6",
     "typescript": "~5.9.3",
     "vite": "^7.2.0",
+    "vitest": "^4.1.0",
     "vue-tsc": "^3.1.5"
   }
 }

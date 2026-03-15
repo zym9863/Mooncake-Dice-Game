@@ -51,6 +51,19 @@ pnpm build:web
 pnpm build:server
 ```
 
+## 单元测试与覆盖率
+
+```bash
+pnpm test
+pnpm test:watch
+pnpm test:coverage
+```
+
+当前测试口径（服务端核心单元测试）：
+- 包含：`server/src/**/*.ts`、`shared/**/*.ts`
+- 排除：`server/src/index.ts`
+- 阈值：行/函数/语句 >= 80%，分支 >= 75%
+
 ## Docker 部署
 
 ```bash

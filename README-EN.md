@@ -51,6 +51,19 @@ pnpm build:web
 pnpm build:server
 ```
 
+## Unit Tests and Coverage
+
+```bash
+pnpm test
+pnpm test:watch
+pnpm test:coverage
+```
+
+Current coverage scope (server core unit tests):
+- Include: `server/src/**/*.ts`, `shared/**/*.ts`
+- Exclude: `server/src/index.ts`
+- Thresholds: lines/functions/statements >= 80%, branches >= 75%
+
 ## Docker Deployment
 
 ```bash
